@@ -67,75 +67,14 @@
 
         /* Main Layout */
         .main-layout {
-            display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
             padding: 30px 0;
             min-height: calc(100vh - 100px);
         }
 
-        /* API Documentation Panel */
-        .api-panel {
-            background: rgba(26, 26, 46, 0.6);
-            border-radius: 15px;
-            padding: 30px;
-            border: 1px solid rgba(100, 255, 218, 0.1);
-            backdrop-filter: blur(10px);
-        }
 
-        .api-title {
-            color: #64ffda;
-            font-size: 2rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .endpoint-card {
-            background: rgba(22, 33, 62, 0.8);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-left: 4px solid #64ffda;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .endpoint-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(100, 255, 218, 0.1);
-        }
-
-        .endpoint-method {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .method-get {
-            background: rgba(0, 255, 127, 0.2);
-            color: #00ff7f;
-        }
-
-        .method-post {
-            background: rgba(255, 165, 0, 0.2);
-            color: #ffa500;
-        }
-
-        .endpoint-path {
-            font-family: 'Courier New', monospace;
-            color: #64ffda;
-            font-size: 1.1rem;
-            margin-bottom: 10px;
-        }
-
-        .endpoint-description {
-            color: #8892b0;
-            line-height: 1.6;
-        }
 
         /* Chatbot Panel */
         .chatbot-panel {
@@ -145,10 +84,9 @@
             backdrop-filter: blur(10px);
             display: flex;
             flex-direction: column;
-            height: fit-content;
-            max-height: 80vh;
-            position: sticky;
-            top: 120px;
+            width: 100%;
+            max-width: 600px;
+            height: 85vh;
         }
 
         .chatbot-header {
@@ -257,6 +195,71 @@
             background: #4ecdc4;
         }
 
+        /* Agent Selection */
+        .agent-selection {
+            padding: 20px;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+            background: rgba(22, 33, 62, 0.3);
+        }
+
+        .agent-label {
+            display: block;
+            color: #64ffda;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .agent-dropdown {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(10, 10, 35, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 8px;
+            color: #ccd6f6;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .agent-dropdown:focus {
+            border-color: #64ffda;
+        }
+
+        .agent-dropdown option {
+            background: #0a0a23;
+            color: #ccd6f6;
+            padding: 10px;
+        }
+
+        .launch-button-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .launch-button {
+            background: linear-gradient(135deg, #64ffda 0%, #4ecdc4 100%);
+            color: #0a0a23;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(100, 255, 218, 0.3);
+        }
+
+        .launch-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(100, 255, 218, 0.4);
+        }
+
+        .launch-button:active {
+            transform: translateY(0);
+        }
+
         /* Quick Actions */
         .quick-actions {
             padding: 0 20px 20px;
@@ -282,30 +285,18 @@
         }
 
         /* Responsive Design */
-        @media (max-width: 1024px) {
-            .main-layout {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .chatbot-panel {
-                position: relative;
-                top: 0;
-                max-height: 500px;
-            }
-        }
-
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
             }
 
-            .api-panel, .chatbot-panel {
-                padding: 20px;
+            .chatbot-panel {
+                margin: 0 20px;
+                height: 80vh;
             }
 
-            .api-title {
-                font-size: 1.5rem;
+            .main-layout {
+                padding: 20px 0;
             }
         }
 
@@ -359,7 +350,7 @@
             <ul class="nav-links">
                 <li><a href="/">Home</a></li>
                 <li><a href="/docs">Documentation</a></li>
-                <li><a href="/api">API Interface</a></li>
+                <li><a href="/oracle">Oracle Interface</a></li>
                 <li><a href="https://github.com/Drehalas/Negravis" target="_blank">GitHub</a></li>
             </ul>
         </nav>
@@ -368,77 +359,30 @@
     <!-- Main Content -->
     <div class="container">
         <div class="main-layout">
-            <!-- API Documentation Panel -->
-            <div class="api-panel">
-                <h1 class="api-title">
-                    🚀 Negravis Oracle API
-                </h1>
-                <p style="color: #8892b0; margin-bottom: 30px; line-height: 1.6;">
-                    Interact with our decentralized oracle network powered by 0G.AI and Fluence Network. 
-                    Test AI services, manage accounts, and explore TEE-verified computations.
-                </p>
-
-                <!-- Account Endpoints -->
-                <div class="endpoint-card">
-                    <span class="endpoint-method method-get">GET</span>
-                    <div class="endpoint-path">/api/account/balance</div>
-                    <div class="endpoint-description">
-                        Retrieve your current account balance and ledger information from the 0G Compute Network.
-                    </div>
-                </div>
-
-                <div class="endpoint-card">
-                    <span class="endpoint-method method-post">POST</span>
-                    <div class="endpoint-path">/api/account/deposit</div>
-                    <div class="endpoint-description">
-                        Deposit funds to your ledger account for AI service payments and network fees.
-                    </div>
-                </div>
-
-                <!-- Service Endpoints -->
-                <div class="endpoint-card">
-                    <span class="endpoint-method method-get">GET</span>
-                    <div class="endpoint-path">/api/services/list</div>
-                    <div class="endpoint-description">
-                        List all available AI services including Llama-3.3-70B and DeepSeek-R1-70B models.
-                    </div>
-                </div>
-
-                <div class="endpoint-card">
-                    <span class="endpoint-method method-post">POST</span>
-                    <div class="endpoint-path">/api/services/chat</div>
-                    <div class="endpoint-description">
-                        Send chat requests to AI models with TEE verification and automatic payment processing.
-                    </div>
-                </div>
-
-                <div class="endpoint-card">
-                    <span class="endpoint-method method-get">GET</span>
-                    <div class="endpoint-path">/api/services/providers</div>
-                    <div class="endpoint-description">
-                        Get information about available service providers and their acknowledgment status.
-                    </div>
-                </div>
-
-                <!-- Documentation Link -->
-                <div style="margin-top: 30px; padding: 20px; background: rgba(100, 255, 218, 0.05); border-radius: 10px; border: 1px solid rgba(100, 255, 218, 0.1);">
-                    <h3 style="color: #64ffda; margin-bottom: 10px;">📚 Full Documentation</h3>
-                    <p style="color: #8892b0; margin-bottom: 15px;">Explore complete API documentation with request/response examples and authentication details.</p>
-                    <a href="/docs" style="color: #64ffda; text-decoration: none; font-weight: bold;">View Swagger Documentation →</a>
-                </div>
-            </div>
-
-            <!-- Chatbot Panel -->
+            <!-- Oracle Chatbot Panel -->
             <div class="chatbot-panel">
                 <div class="chatbot-header">
                     <div class="status-indicator"></div>
                     <div class="chatbot-title">Oracle Assistant</div>
                 </div>
 
-                <div class="chat-messages" id="chatMessages">
-                    <div class="message bot">
-                        👋 Welcome to Negravis Oracle! I can help you test our AI services, check account balances, and explore our decentralized infrastructure. What would you like to try?
+                <!-- Agent Selection -->
+                <div class="agent-selection">
+                    <label for="agentSelect" class="agent-label">Select AI Agent:</label>
+                    <select id="agentSelect" class="agent-dropdown">
+                        <option value="oracle-assistant">🔮 Oracle Assistant (Default)</option>
+                        <option value="llama-3.3-70b">🦙 Llama-3.3-70B-Instruct</option>
+                        <option value="deepseek-r1-70b">🧠 DeepSeek-R1-70B</option>
+                        <option value="technical-advisor">⚙️ Technical Advisor</option>
+                        <option value="api-helper">📚 API Documentation Helper</option>
+                    </select>
+                    <div class="launch-button-container">
+                        <button class="launch-button" onclick="launchAgent()">🚀 Launch Agent</button>
                     </div>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Messages will be populated by JavaScript -->
                 </div>
 
                 <div class="quick-actions">
@@ -568,9 +512,138 @@
             return `🤔 I understand you're asking about "${message}". Try using the quick actions above or ask about:\n\n• Account balance\n• Available services\n• Testing chat functionality\n• Provider status\n\nOr visit /docs for complete API documentation!`;
         }
 
+        let currentAgent = 'oracle-assistant';
+        let agentLaunched = false;
+
+        function launchAgent() {
+            const agentSelect = document.getElementById('agentSelect');
+            currentAgent = agentSelect.value;
+            agentLaunched = true;
+            
+            // Clear chat messages
+            chatMessages.innerHTML = '';
+            
+            // Add agent-specific welcome message
+            const welcomeMessages = {
+                'oracle-assistant': '🔮 Oracle Assistant activated! I can help you test our AI services, check account balances, and explore our decentralized infrastructure. What would you like to try?',
+                'llama-3.3-70b': '🦙 Llama-3.3-70B-Instruct model is now active! I\'m a powerful language model running on 0G Compute Network with TEE verification. Ask me anything!',
+                'deepseek-r1-70b': '🧠 DeepSeek-R1-70B model activated! I specialize in reasoning and problem-solving. I\'m running on decentralized infrastructure with full TEE verification.',
+                'technical-advisor': '⚙️ Technical Advisor ready! I can help you with API integration, troubleshooting, and understanding the 0G Compute Network architecture.',
+                'api-helper': '📚 API Documentation Helper online! I can guide you through our endpoints, provide code examples, and help with implementation details.'
+            };
+            
+            addMessage(welcomeMessages[currentAgent]);
+            
+            // Update chatbot title
+            const chatbotTitle = document.querySelector('.chatbot-title');
+            const agentNames = {
+                'oracle-assistant': 'Oracle Assistant',
+                'llama-3.3-70b': 'Llama-3.3-70B',
+                'deepseek-r1-70b': 'DeepSeek-R1-70B',
+                'technical-advisor': 'Technical Advisor',
+                'api-helper': 'API Helper'
+            };
+            chatbotTitle.textContent = agentNames[currentAgent];
+            
+            // Focus on input
+            chatInput.focus();
+        }
+
+        async function processMessage(message) {
+            if (!agentLaunched) {
+                return '🚀 Please select and launch an agent first using the dropdown above!';
+            }
+            
+            const lowerMessage = message.toLowerCase();
+            
+            // Agent-specific responses
+            if (currentAgent === 'llama-3.3-70b') {
+                if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+                    return '🦙 Hello! I\'m Llama-3.3-70B running on 0G Compute Network. I can help with various tasks including coding, analysis, creative writing, and answering questions. What would you like to explore?';
+                }
+                return `🦙 [Llama-3.3-70B Response] I understand you\'re asking about "${message}". As a large language model running on decentralized infrastructure, I can help with complex reasoning, coding, and analysis tasks. How can I assist you further?`;
+            }
+            
+            if (currentAgent === 'deepseek-r1-70b') {
+                if (lowerMessage.includes('reasoning') || lowerMessage.includes('problem')) {
+                    return '🧠 I excel at step-by-step reasoning and problem decomposition. Present me with any complex problem and I\'ll break it down systematically using chain-of-thought reasoning.';
+                }
+                return `🧠 [DeepSeek-R1-70B Analysis] Let me reason through "${message}"... This appears to be a query that requires systematic analysis. I\'m designed for advanced reasoning tasks on the 0G Compute Network.`;
+            }
+            
+            if (currentAgent === 'technical-advisor') {
+                if (lowerMessage.includes('integration') || lowerMessage.includes('api')) {
+                    return '⚙️ For API integration, start with authentication, then use our REST endpoints. Check /docs for OpenAPI specs. Need help with specific endpoints or error handling?';
+                }
+                if (lowerMessage.includes('error') || lowerMessage.includes('troubleshoot')) {
+                    return '⚙️ Common issues: 1) Check API keys 2) Verify endpoint URLs 3) Ensure proper request format 4) Check network connectivity. What specific error are you encountering?';
+                }
+                return `⚙️ [Technical Analysis] Regarding "${message}" - I can help with architecture, implementation, debugging, and optimization. What technical aspect needs attention?`;
+            }
+            
+            if (currentAgent === 'api-helper') {
+                if (lowerMessage.includes('endpoint') || lowerMessage.includes('documentation')) {
+                    return '📚 Our main endpoints: /api/account/balance (GET), /api/services/list (GET), /api/services/chat (POST), /api/services/providers (GET). Each has detailed docs at /docs with examples!';
+                }
+                return `📚 [API Documentation] For "${message}", check our comprehensive docs at /docs. I can provide specific examples, parameter details, and response formats. What endpoint interests you?`;
+            }
+            
+            // Default Oracle Assistant responses (existing logic)
+            if (lowerMessage.includes('balance')) {
+                try {
+                    const response = await fetch('/api/account/balance');
+                    if (response.ok) {
+                        const data = await response.json();
+                        return `💰 Your current balance: ${data.balance || 'Loading...'} tokens. Ledger status: ${data.status || 'Active'}`;
+                    }
+                } catch (error) {
+                    return '⚠️ Unable to fetch balance. Please ensure your wallet is connected and try again.';
+                }
+            }
+
+            if (lowerMessage.includes('services') || lowerMessage.includes('list')) {
+                try {
+                    const response = await fetch('/api/services/list');
+                    if (response.ok) {
+                        const data = await response.json();
+                        return `🤖 Available AI Services:\n• Llama-3.3-70B-Instruct\n• DeepSeek-R1-70B\n\nAll services are TEE-verified and ready for use!`;
+                    }
+                } catch (error) {
+                    return '🤖 Available AI Services:\n• Llama-3.3-70B-Instruct\n• DeepSeek-R1-70B\n\nBoth models are TEE-verified and powered by 0G Compute Network.';
+                }
+            }
+
+            if (lowerMessage.includes('chat') || lowerMessage.includes('test')) {
+                return `💬 To test AI chat, you can send a POST request to /api/services/chat with:\n\n{\n  "model": "llama-3.3-70b-instruct",\n  "messages": [{"role": "user", "content": "Hello!"}]\n}\n\nThe response will include TEE verification and payment details.`;
+            }
+
+            if (lowerMessage.includes('providers')) {
+                try {
+                    const response = await fetch('/api/services/providers');
+                    if (response.ok) {
+                        return `🔗 Service providers are active and acknowledged. All computations are verified through TEE (Trusted Execution Environment).`;
+                    }
+                } catch (error) {
+                    return '🔗 Service providers are managed through 0G Compute Network with TEE verification for trustless execution.';
+                }
+            }
+
+            if (lowerMessage.includes('help') || lowerMessage.includes('what')) {
+                return `🔮 I can help you with:\n\n• Check account balance and ledger status\n• List available AI services\n• Test chat functionality\n• View provider information\n• Explain API endpoints\n\nTry asking "Check my balance" or "List AI services"!`;
+            }
+
+            if (lowerMessage.includes('0g') || lowerMessage.includes('fluence')) {
+                return `🚀 Negravis is powered by:\n\n• 0G.AI: Modular AI-first blockchain with scalable execution\n• Fluence Network: Decentralized compute platform\n\nThis combination provides TEE verification, micropayments, and trustless AI inference.`;
+            }
+
+            // Default response
+            return `🤔 I understand you're asking about "${message}". Try using the quick actions above or ask about:\n\n• Account balance\n• Available services\n• Testing chat functionality\n• Provider status\n\nOr visit /docs for complete API documentation!`;
+        }
+
         // Initialize with a welcome state
         document.addEventListener('DOMContentLoaded', () => {
-            chatInput.focus();
+            // Show initial message to select agent
+            addMessage('🔮 Welcome to Negravis Oracle! This is your gateway to decentralized AI services powered by 0G.AI and Fluence Network. Please select an AI agent from the dropdown above and click "Launch Agent" to begin your session.');
         });
     </script>
 </body>

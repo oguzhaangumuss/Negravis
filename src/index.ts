@@ -37,8 +37,8 @@ const apiPrefix = '/api';
 app.use(`${apiPrefix}/account`, accountRoutes);
 app.use(`${apiPrefix}/services`, serviceRoutes);
 
-// API interface route - serve the interactive API page
-app.get('/api', (req, res) => {
+// Oracle interface route - serve the interactive Oracle page
+app.get('/oracle', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/api.html'));
 });
 
