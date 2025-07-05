@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swagger';
 import dotenv from 'dotenv';
@@ -20,6 +21,9 @@ const PORT = process.env.PORT || 4000;
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../public')));
+
 // API documentation route
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   explorer: true,
@@ -33,10 +37,15 @@ const apiPrefix = '/api';
 app.use(`${apiPrefix}/account`, accountRoutes);
 app.use(`${apiPrefix}/services`, serviceRoutes);
 
-// Root route with basic info
-app.get('/', (req, res) => {
+// API interface route - serve the interactive API page
+app.get('/api', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/api.html'));
+});
+
+// API info route for programmatic access
+app.get('/api/info', (req, res) => {
   res.json({
-    name: '0G Compute Network API',
+    name: 'Negravis - 0G Compute Network API',
     version: '1.0.0',
     documentation: '/docs',
     endpoints: {
@@ -78,4 +87,4 @@ const startServer = async () => {
 // Start the application
 startServer();
 
-export default app; 
+export default app;

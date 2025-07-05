@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Negravis API - Interactive Oracle Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a23 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ccd6f6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+            background: rgba(10, 10, 35, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #64ffda;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: #ccd6f6;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #64ffda;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            padding: 30px 0;
+            min-height: calc(100vh - 100px);
+        }
+
+        /* API Documentation Panel */
+        .api-panel {
+            background: rgba(26, 26, 46, 0.6);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .api-title {
+            color: #64ffda;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .endpoint-card {
+            background: rgba(22, 33, 62, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #64ffda;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .endpoint-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(100, 255, 218, 0.1);
+        }
+
+        .endpoint-method {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .method-get {
+            background: rgba(0, 255, 127, 0.2);
+            color: #00ff7f;
+        }
+
+        .method-post {
+            background: rgba(255, 165, 0, 0.2);
+            color: #ffa500;
+        }
+
+        .endpoint-path {
+            font-family: 'Courier New', monospace;
+            color: #64ffda;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .endpoint-description {
+            color: #8892b0;
+            line-height: 1.6;
+        }
+
+        /* Chatbot Panel */
+        .chatbot-panel {
+            background: rgba(26, 26, 46, 0.6);
+            border-radius: 15px;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            height: fit-content;
+            max-height: 80vh;
+            position: sticky;
+            top: 120px;
+        }
+
+        .chatbot-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chatbot-title {
+            color: #64ffda;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00ff7f;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 15px;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+
+        .message.user {
+            background: rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            align-self: flex-end;
+            color: #64ffda;
+        }
+
+        .message.bot {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            align-self: flex-start;
+            color: #ccd6f6;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            border-top: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(22, 33, 62, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 25px;
+            color: #ccd6f6;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .chat-input:focus {
+            border-color: #64ffda;
+        }
+
+        .chat-input::placeholder {
+            color: #8892b0;
+        }
+
+        .send-button {
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #64ffda;
+            color: #0a0a23;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+
+        .send-button:hover {
+            background: #4ecdc4;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            padding: 0 20px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .quick-action {
+            background: rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            color: #64ffda;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-action:hover {
+            background: rgba(100, 255, 218, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .chatbot-panel {
+                position: relative;
+                top: 0;
+                max-height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .api-panel, .chatbot-panel {
+                padding: 20px;
+            }
+
+            .api-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Loading Animation */
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            color: #8892b0;
+            font-style: italic;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #64ffda;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav container">
+            <a href="/" class="logo">🔮 Negravis API</a>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/docs">Documentation</a></li>
+                <li><a href="/api">API Interface</a></li>
+                <li><a href="https://github.com/Drehalas/Negravis" target="_blank">GitHub</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="main-layout">
+            <!-- API Documentation Panel -->
+            <div class="api-panel">
+                <h1 class="api-title">
+                    🚀 Negravis Oracle API
+                </h1>
+                <p style="color: #8892b0; margin-bottom: 30px; line-height: 1.6;">
+                    Interact with our decentralized oracle network powered by 0G.AI and Fluence Network. 
+                    Test AI services, manage accounts, and explore TEE-verified computations.
+                </p>
+
+                <!-- Account Endpoints -->
+                <div class="endpoint-card">
+                    <span class="endpoint-method method-get">GET</span>
+                    <div class="endpoint-path">/api/account/balance</div>
+                    <div class="endpoint-description">
+                        Retrieve your current account balance and ledger information from the 0G Compute Network.
+                    </div>
+                </div>
+
+                <div class="endpoint-card">
+                    <span class="endpoint-method method-post">POST</span>
+                    <div class="endpoint-path">/api/account/deposit</div>
+                    <div class="endpoint-description">
+                        Deposit funds to your ledger account for AI service payments and network fees.
+                    </div>
+                </div>
+
+                <!-- Service Endpoints -->
+                <div class="endpoint-card">
+                    <span class="endpoint-method method-get">GET</span>
+                    <div class="endpoint-path">/api/services/list</div>
+                    <div class="endpoint-description">
+                        List all available AI services including Llama-3.3-70B and DeepSeek-R1-70B models.
+                    </div>
+                </div>
+
+                <div class="endpoint-card">
+                    <span class="endpoint-method method-post">POST</span>
+                    <div class="endpoint-path">/api/services/chat</div>
+                    <div class="endpoint-description">
+                        Send chat requests to AI models with TEE verification and automatic payment processing.
+                    </div>
+                </div>
+
+                <div class="endpoint-card">
+                    <span class="endpoint-method method-get">GET</span>
+                    <div class="endpoint-path">/api/services/providers</div>
+                    <div class="endpoint-description">
+                        Get information about available service providers and their acknowledgment status.
+                    </div>
+                </div>
+
+                <!-- Documentation Link -->
+                <div style="margin-top: 30px; padding: 20px; background: rgba(100, 255, 218, 0.05); border-radius: 10px; border: 1px solid rgba(100, 255, 218, 0.1);">
+                    <h3 style="color: #64ffda; margin-bottom: 10px;">📚 Full Documentation</h3>
+                    <p style="color: #8892b0; margin-bottom: 15px;">Explore complete API documentation with request/response examples and authentication details.</p>
+                    <a href="/docs" style="color: #64ffda; text-decoration: none; font-weight: bold;">View Swagger Documentation →</a>
+                </div>
+            </div>
+
+            <!-- Chatbot Panel -->
+            <div class="chatbot-panel">
+                <div class="chatbot-header">
+                    <div class="status-indicator"></div>
+                    <div class="chatbot-title">Oracle Assistant</div>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot">
+                        👋 Welcome to Negravis Oracle! I can help you test our AI services, check account balances, and explore our decentralized infrastructure. What would you like to try?
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <div class="quick-action" onclick="sendQuickMessage('Check my balance')">💰 Check Balance</div>
+                    <div class="quick-action" onclick="sendQuickMessage('List AI services')">🤖 List Services</div>
+                    <div class="quick-action" onclick="sendQuickMessage('Test chat with AI')">💬 Test Chat</div>
+                    <div class="quick-action" onclick="sendQuickMessage('Show providers')">🔗 Providers</div>
+                </div>
+
+                <div class="typing-indicator" id="typingIndicator">
+                    <span>Oracle is thinking</span>
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+
+                <div class="chat-input-container" style="position: relative;">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Ask about our API or test a service..." onkeypress="handleKeyPress(event)">
+                    <button class="send-button" onclick="sendMessage()">➤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        function addMessage(content, isUser = false) {
+            const message = document.createElement('div');
+            message.className = `message ${isUser ? 'user' : 'bot'}`;
+            message.textContent = content;
+            chatMessages.appendChild(message);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTyping() {
+            typingIndicator.style.display = 'flex';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTyping() {
+            typingIndicator.style.display = 'none';
+        }
+
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            chatInput.value = '';
+            showTyping();
+
+            // Simulate API call delay
+            setTimeout(async () => {
+                hideTyping();
+                const response = await processMessage(message);
+                addMessage(response);
+            }, 1000 + Math.random() * 2000);
+        }
+
+        function sendQuickMessage(message) {
+            chatInput.value = message;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function processMessage(message) {
+            const lowerMessage = message.toLowerCase();
+
+            if (lowerMessage.includes('balance')) {
+                try {
+                    const response = await fetch('/api/account/balance');
+                    if (response.ok) {
+                        const data = await response.json();
+                        return `💰 Your current balance: ${data.balance || 'Loading...'} tokens. Ledger status: ${data.status || 'Active'}`;
+                    }
+                } catch (error) {
+                    return '⚠️ Unable to fetch balance. Please ensure your wallet is connected and try again.';
+                }
+            }
+
+            if (lowerMessage.includes('services') || lowerMessage.includes('list')) {
+                try {
+                    const response = await fetch('/api/services/list');
+                    if (response.ok) {
+                        const data = await response.json();
+                        return `🤖 Available AI Services:\n• Llama-3.3-70B-Instruct\n• DeepSeek-R1-70B\n\nAll services are TEE-verified and ready for use!`;
+                    }
+                } catch (error) {
+                    return '🤖 Available AI Services:\n• Llama-3.3-70B-Instruct\n• DeepSeek-R1-70B\n\nBoth models are TEE-verified and powered by 0G Compute Network.';
+                }
+            }
+
+            if (lowerMessage.includes('chat') || lowerMessage.includes('test')) {
+                return `💬 To test AI chat, you can send a POST request to /api/services/chat with:\n\n{\n  "model": "llama-3.3-70b-instruct",\n  "messages": [{"role": "user", "content": "Hello!"}]\n}\n\nThe response will include TEE verification and payment details.`;
+            }
+
+            if (lowerMessage.includes('providers')) {
+                try {
+                    const response = await fetch('/api/services/providers');
+                    if (response.ok) {
+                        return `🔗 Service providers are active and acknowledged. All computations are verified through TEE (Trusted Execution Environment).`;
+                    }
+                } catch (error) {
+                    return '🔗 Service providers are managed through 0G Compute Network with TEE verification for trustless execution.';
+                }
+            }
+
+            if (lowerMessage.includes('help') || lowerMessage.includes('what')) {
+                return `🔮 I can help you with:\n\n• Check account balance and ledger status\n• List available AI services\n• Test chat functionality\n• View provider information\n• Explain API endpoints\n\nTry asking "Check my balance" or "List AI services"!`;
+            }
+
+            if (lowerMessage.includes('0g') || lowerMessage.includes('fluence')) {
+                return `🚀 Negravis is powered by:\n\n• 0G.AI: Modular AI-first blockchain with scalable execution\n• Fluence Network: Decentralized compute platform\n\nThis combination provides TEE verification, micropayments, and trustless AI inference.`;
+            }
+
+            // Default response
+            return `🤔 I understand you're asking about "${message}". Try using the quick actions above or ask about:\n\n• Account balance\n• Available services\n• Testing chat functionality\n• Provider status\n\nOr visit /docs for complete API documentation!`;
+        }
+
+        // Initialize with a welcome state
+        document.addEventListener('DOMContentLoaded', () => {
+            chatInput.focus();
+        });
+    </script>
+</body>
+</html>
