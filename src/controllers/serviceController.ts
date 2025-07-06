@@ -474,3 +474,116 @@ export const getOracleStatus = async (req: Request, res: Response) => {
     });
   }
 };
+
+/**
+ * @swagger
+ * /services/hedera/transactions:
+ *   get:
+ *     summary: Get transactions from Hedera Mirror Node
+ *     tags: [Hedera]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 25
+ *         description: Number of transactions to return
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Order of transactions
+ *       - in: query
+ *         name: account.id
+ *         schema:
+ *           type: string
+ *         description: Account ID to filter transactions
+ *       - in: query
+ *         name: timestamp
+ *         schema:
+ *           type: string
+ *         description: Timestamp filter (e.g., gte:1234567890.123456789)
+ *     responses:
+ *       200:
+ *         description: List of transactions from Hedera Mirror Node
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 transactions:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       consensus_timestamp:
+ *                         type: string
+ *                       transaction_id:
+ *                         type: string
+ *                       type:
+ *                         type: string
+ *                       result:
+ *                         type: string
+ *                       charged_tx_fee:
+ *                         type: integer
+ *                       entity_id:
+ *                         type: string
+ *                 links:
+ *                   type: object
+ *                   properties:
+ *                     next:
+ *                       type: string
+ *       400:
+ *         description: Invalid request parameters
+ *       500:
+ *         description: Server error
+ */
+export const getHederaTransactions = async (req: Request, res: Response) => {
+  try {
+    const { limit = 25, order = 'desc', 'account.id': accountId, timestamp } = req.query;
+    
+    // Build query parameters
+    const params = new URLSearchParams();
+    params.append('limit', String(limit));
+    params.append('order', String(order));
+    
+    if (accountId) {
+      params.append('account.id', String(accountId));
+    }
+    
+    if (timestamp) {
+      params.append('timestamp', String(timestamp));
+    }
+    
+    // Make request to Hedera Mirror Node API
+    const response = await fetch(`https://mainnet.mirrornode.hedera.com/api/v1/transactions?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Hedera Mirror Node API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json() as any;
+    
+    return res.status(200).json({
+      success: true,
+      transactions: data.transactions || [],
+      links: data.links || {}
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};

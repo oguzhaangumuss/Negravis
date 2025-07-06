@@ -14,4 +14,7 @@ router.post('/oracle/chat', serviceController.oracleChat);
 router.get('/oracle/models', serviceController.getOracleModels);
 router.get('/oracle/status', serviceController.getOracleStatus);
 
+// Hedera Mirror Node routes
+router.get('/hedera/transactions', serviceController.getHederaTransactions);
+
 export default router;
