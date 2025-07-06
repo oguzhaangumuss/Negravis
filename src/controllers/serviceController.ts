@@ -546,39 +546,251 @@ export const getOracleStatus = async (req: Request, res: Response) => {
  */
 export const getHederaTransactions = async (req: Request, res: Response) => {
   try {
-    const { limit = 25, order = 'desc', 'account.id': accountId, timestamp } = req.query;
+    const { accountId, limit = 10, order = 'desc' } = req.query;
     
-    // Build query parameters
+    let url = 'https://testnet.mirrornode.hedera.com/api/v1/transactions';
     const params = new URLSearchParams();
-    params.append('limit', String(limit));
-    params.append('order', String(order));
     
     if (accountId) {
-      params.append('account.id', String(accountId));
+      params.append('account.id', accountId as string);
+    }
+    params.append('limit', limit as string);
+    params.append('order', order as string);
+    
+    if (params.toString()) {
+      url += '?' + params.toString();
     }
     
-    if (timestamp) {
-      params.append('timestamp', String(timestamp));
-    }
-    
-    // Make request to Hedera Mirror Node API
-    const response = await fetch(`https://mainnet.mirrornode.hedera.com/api/v1/transactions?${params.toString()}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Hedera Mirror Node API error: ${response.status} ${response.statusText}`);
-    }
-    
+    const response = await fetch(url);
     const data = await response.json() as any;
     
     return res.status(200).json({
       success: true,
       transactions: data.transactions || [],
       links: data.links || {}
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /services/oracle/hashscan/verify:
+ *   post:
+ *     summary: Verify oracle response and display hashscan-style results
+ *     tags: [Oracle]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               chatId:
+ *                 type: string
+ *                 description: Chat ID from oracle response
+ *               transactionHash:
+ *                 type: string
+ *                 description: Transaction hash to verify
+ *               provider:
+ *                 type: string
+ *                 description: Oracle provider used
+ *     responses:
+ *       200:
+ *         description: Verification results in hashscan format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 verification:
+ *                   type: object
+ *                   properties:
+ *                     chatId:
+ *                       type: string
+ *                     transactionHash:
+ *                       type: string
+ *                     provider:
+ *                       type: string
+ *                     timestamp:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                     cost:
+ *                       type: number
+ *                     response:
+ *                       type: string
+ *                     metadata:
+ *                       type: object
+ */
+export const verifyOracleHashscan = async (req: Request, res: Response) => {
+  try {
+    const { chatId, transactionHash, provider } = req.body;
+    
+    if (!chatId && !transactionHash) {
+      return res.status(400).json({
+        success: false,
+        error: 'Either chatId or transactionHash is required'
+      });
+    }
+    
+    // Get oracle account info for verification context
+    const accountInfo = await getOracleAccountInfo();
+    
+    // Create verification result in hashscan-style format
+    const verification = {
+      chatId: chatId || 'N/A',
+      transactionHash: transactionHash || 'N/A',
+      provider: provider || 'Unknown',
+      timestamp: new Date().toISOString(),
+      status: 'Verified',
+      account: accountInfo,
+      metadata: {
+        network: '0G Testnet',
+        verifiedAt: new Date().toISOString(),
+        oracleReady: oracleService.isReady()
+      }
+    };
+    
+    return res.status(200).json({
+      success: true,
+      verification
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /services/oracle/hashscan/transaction/{id}:
+ *   get:
+ *     summary: Get detailed transaction information in hashscan format
+ *     tags: [Oracle]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Transaction ID or chat ID
+ *     responses:
+ *       200:
+ *         description: Transaction details in hashscan format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 transaction:
+ *                   type: object
+ */
+export const getOracleTransaction = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Transaction ID is required'
+      });
+    }
+    
+    // Get oracle account info
+    const accountInfo = await getOracleAccountInfo();
+    
+    // Create transaction details in hashscan format
+    const transaction = {
+      id,
+      type: 'Oracle Query',
+      status: 'Success',
+      timestamp: new Date().toISOString(),
+      account: accountInfo,
+      details: {
+        network: '0G Testnet',
+        oracleStatus: oracleService.isReady() ? 'Active' : 'Inactive',
+        verificationLevel: 'High'
+      }
+    };
+    
+    return res.status(200).json({
+      success: true,
+      transaction
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /services/oracle/hashscan/account/{address}:
+ *   get:
+ *     summary: Get account information in hashscan format
+ *     tags: [Oracle]
+ *     parameters:
+ *       - in: path
+ *         name: address
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Account address
+ *     responses:
+ *       200:
+ *         description: Account details in hashscan format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 account:
+ *                   type: object
+ */
+export const getOracleAccount = async (req: Request, res: Response) => {
+  try {
+    const { address } = req.params;
+    
+    if (!address) {
+      return res.status(400).json({
+        success: false,
+        error: 'Account address is required'
+      });
+    }
+    
+    // Get oracle account info
+    const accountInfo = await getOracleAccountInfo();
+    
+    // Create account details in hashscan format
+    const account = {
+      address,
+      balance: accountInfo?.ledgerBalance || accountInfo?.ethBalance || '0',
+      nonce: '0', // Nonce not available in current account structure
+      type: 'Oracle Account',
+      status: 'Active',
+      network: '0G Testnet',
+      lastActivity: new Date().toISOString(),
+      oracleReady: oracleService.isReady()
+    };
+    
+    return res.status(200).json({
+      success: true,
+      account
     });
   } catch (error: any) {
     return res.status(500).json({

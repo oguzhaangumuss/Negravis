@@ -91,7 +91,7 @@ const convertBigIntToString = (data: any): any => {
 
 /**
  * @swagger
- * /account/info:
+ * /api/account/info:
  *   get:
  *     summary: Get account information
  *     tags: [Account]
@@ -138,7 +138,7 @@ export const getAccountInfo = async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /account/refund:
+ * /api/account/refund:
  *   post:
  *     summary: Request refund for unused funds
  *     tags: [Account]
