@@ -146,30 +146,6 @@ The starter kit includes pre-configured access to official 0G AI services:
 | **llama-3.3-70b-instruct** | `0xf07240Efa67755B5311bc75784a061eDB47165Dd` | State-of-the-art 70B parameter model for general AI tasks | TEE (TeeML) |
 | **deepseek-r1-70b** | `0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3` | Advanced reasoning model optimized for complex problem solving | TEE (TeeML) |
 
-## 📁 Repository Structure
-
-```
-0g-compute-starter-kit/
-├── src/
-│   ├── config/
-│   │   └── swagger.ts           # Swagger/OpenAPI configuration
-│   ├── controllers/
-│   │   ├── accountController.ts # Account management endpoints
-│   │   └── serviceController.ts # AI service endpoints
-│   ├── routes/
-│   │   ├── accountRoutes.ts     # Account route definitions
-│   │   └── serviceRoutes.ts     # Service route definitions
-│   ├── services/
-│   │   └── brokerService.ts     # Core 0G broker integration
-│   ├── index.ts                 # Express app entry point
-│   └── startup.ts               # Application initialization
-├── demo-compute-flow.ts         # Comprehensive demo script
-├── DEMO_SCRIPT.md              # Demo script documentation
-├── package.json                # Project configuration
-├── tsconfig.json               # TypeScript configuration
-└── README.md                   # This file
-```
-
 ## 🚀 Quick Start
 
 ### Prerequisites
