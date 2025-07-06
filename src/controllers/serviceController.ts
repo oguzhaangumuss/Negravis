@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { brokerService } from '../services/brokerService';
-import { oracleService, queryOracle, getOracleModels as getAvailableOracleModels, getOracleAccountInfo } from '../../oracle-compute-service';
+import { oracleService, queryOracle, getOracleModels as getAvailableOracleModels, getOracleAccountInfo } from '../oracle-compute-service';
 
 /**
  * Helper function to convert BigInt values to strings in an object
