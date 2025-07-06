@@ -2,6 +2,129 @@
 
 A comprehensive REST API implementation for interacting with the 0G Compute Network using TypeScript. This starter kit demonstrates how to integrate decentralized AI services with automatic payment processing, TEE verification, and seamless wallet management.
 
+# 🚀 Getting Started with Fluence Console
+
+This guide helps you launch your first Fluence peer node using the [Fluence Console](https://console.fluence.network) and connect to it via SSH.
+
+---
+
+## 🔧 Requirements
+
+- A Fluence Console account: [console.fluence.network](https://console.fluence.network)
+- A remote Linux server (from any provider)
+- SSH key (public/private pair)
+- Basic knowledge of terminal and SSH
+
+---
+
+## ✅ Step-by-Step Guide
+
+### 1. Open the Console
+
+Go to: [https://console.fluence.network](https://console.fluence.network)  
+Log in using your preferred method (GitHub or email).
+
+Click **“Create Peer”** or **“+ Launch Peer”**.
+
+---
+
+### 2. Select Available Location
+
+Choose a server location from the **Available Locations** list.  
+We recommend picking a location geographically close to your target users.
+
+> ⚠️ For first-time setup, you're allowed **only once** to select the **lowest configuration** (4 GB RAM). Use it wisely.
+
+---
+
+### 3. Configure Your Peer
+
+- **RAM**: 4 GB (minimum for first-time setup)
+- **DAS Capacity**: Choose **25 GB** (the lowest available)
+- **Server Type**: Select **AMD EPYC**
+- **Network**: Choose **Public**
+
+---
+
+### 4. Choose Your Linux Provider
+
+Provision a Linux server (Ubuntu or Debian recommended) with:
+- 4+ GB RAM
+- Public IP address
+- SSH access (port 22 open)
+
+Popular providers: Hetzner, DigitalOcean, AWS, Vultr, etc.
+
+D
+### 5. Add Your SSH Key
+
+If you don’t have an SSH key yet, generate one:
+
+```bash
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+```F
+
+
+Copy your public key:
+
+bash
+Kopyala
+Düzenle
+cat ~/.ssh/id_ed25519.pub
+Paste it into the Fluence Console when prompted during setup.
+
+6. Launch Your Peer
+After completing the configuration and adding your SSH key, click “Launch”.
+
+The setup process may take a few minutes.
+
+7. Connect via SSH
+Go to: https://console.fluence.network/running-instances
+
+Locate your instance
+
+Copy the IP address
+
+Open your terminal and connect:
+
+bash
+Kopyala
+Düzenle
+ssh root@<your-ip-address>
+🛠 Optional: Developer Tools Setup
+Once connected to your server, you may want to install:
+
+Node.js & npm
+bash
+Kopyala
+Düzenle
+sudo apt update
+sudo apt install nodejs npm -y
+Git
+bash
+Kopyala
+Düzenle
+sudo apt install git -y
+GitHub Repo Pull
+If you're using GitHub to manage code:
+
+git clone https://github.com/your-username/your-repo.git
+cd your-repo
+git pull origin main
+📦 Next Steps
+Now your Fluence peer is running!
+You can start deploying WASM services, Aqua workflows, or connect it to a decentralized app.
+
+For advanced usage and deployment:
+
+Visit the official docs: https://docs.fluence.dev
+
+🧠 Need Help?
+Join the Fluence community on Discord or check the Docs.
+
+
+
 ## 🌟 Features
 
 - **REST API Server** with Express.js and TypeScript
