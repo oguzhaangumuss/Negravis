@@ -1,0 +1,181 @@
+{
+  "test_cases": [
+    {
+      "category": "A",
+      "id": "A1",
+      "claim": "0G Galileo testnet uses Chain ID 16601",
+      "expected": "TRUE"
+    },
+    {
+      "category": "A",
+      "id": "A2",
+      "claim": "0G implements a modular blockchain architecture with four core components",
+      "expected": "TRUE"
+    },
+    {
+      "category": "A",
+      "id": "A3",
+      "claim": "0G uses Proof-of-Stake consensus mechanism",
+      "expected": "TRUE"
+    },
+    {
+      "category": "A",
+      "id": "A4",
+      "claim": "0G Chain is fully compatible with the Ethereum Virtual Machine",
+      "expected": "TRUE"
+    },
+    {
+      "category": "A",
+      "id": "A5",
+      "claim": "0G Network raised $325 million from investors",
+      "expected": "TRUE"
+    },
+    {
+      "category": "A",
+      "id": "A6",
+      "claim": "Eligible testnet validators receive 1,143 tokens in the airdrop",
+      "expected": "TRUE"
+    },
+    {
+      "category": "A",
+      "id": "A7",
+      "claim": "The 0G block explorer is located at https://chainscan-galileo.0g.ai",
+      "expected": "TRUE"
+    },
+    {
+      "category": "A",
+      "id": "A8",
+      "claim": "The native token of 0G Network is called OG",
+      "expected": "TRUE"
+    },
+
+    {
+      "category": "B",
+      "id": "B1",
+      "claim": "0G Galileo testnet uses Chain ID 1337",
+      "expected": "FALSE"
+    },
+    {
+      "category": "B",
+      "id": "B2",
+      "claim": "0G Network uses Proof-of-Work consensus mechanism",
+      "expected": "FALSE"
+    },
+    {
+      "category": "B",
+      "id": "B3",
+      "claim": "0G Network raised $500 million in funding",
+      "expected": "FALSE"
+    },
+    {
+      "category": "B",
+      "id": "B4",
+      "claim": "Eligible validators receive 2,000 tokens in the airdrop",
+      "expected": "FALSE"
+    },
+    {
+      "category": "B",
+      "id": "B5",
+      "claim": "The 0G block explorer is at https://etherscan.io",
+      "expected": "FALSE"
+    },
+    {
+      "category": "B",
+      "id": "B6",
+      "claim": "The native token of 0G Network is called ZRG",
+      "expected": "FALSE"
+    },
+    {
+      "category": "B",
+      "id": "B7",
+      "claim": "0G is a traditional monolithic blockchain without modular components",
+      "expected": "FALSE"
+    },
+    {
+      "category": "B",
+      "id": "B8",
+      "claim": "The 0G RPC endpoint is https://mainnet.infura.io",
+      "expected": "FALSE"
+    },
+
+    {
+      "category": "C",
+      "id": "C1",
+      "claim": "0G can process exactly 100,000 transactions per second",
+      "expected": "UNDEFINED"
+    },
+    {
+      "category": "C",
+      "id": "C2",
+      "claim": "0G mainnet will launch on December 15, 2024",
+      "expected": "UNDEFINED"
+    },
+    {
+      "category": "C",
+      "id": "C3",
+      "claim": "0G Network currently has 1,500 active validators",
+      "expected": "UNDEFINED"
+    },
+    {
+      "category": "C",
+      "id": "C4",
+      "claim": "50% of 0G validators are located in North America",
+      "expected": "UNDEFINED"
+    },
+    {
+      "category": "C",
+      "id": "C5",
+      "claim": "The OG token is currently priced at $2.50",
+      "expected": "UNDEFINED"
+    },
+    {
+      "category": "C",
+      "id": "C6",
+      "claim": "0G Network currently stores 500 TB of data",
+      "expected": "UNDEFINED"
+    },
+    {
+      "category": "C",
+      "id": "C7",
+      "claim": "0G Network consumes 100 MW of energy daily",
+      "expected": "UNDEFINED"
+    },
+    {
+      "category": "C",
+      "id": "C8",
+      "claim": "0G has a strategic partnership with Microsoft Azure",
+      "expected": "UNDEFINED"
+    },
+
+    {
+      "category": "D",
+      "id": "D1",
+      "claim": "0G's modular design allows developers to use individual components without migrating entire applications",
+      "expected": "TRUE"
+    },
+    {
+      "category": "D",
+      "id": "D2",
+      "claim": "0G was specifically designed to handle AI workloads that traditional blockchains cannot support",
+      "expected": "TRUE"
+    },
+    {
+      "category": "D",
+      "id": "D3",
+      "claim": "Existing Ethereum smart contracts can utilize 0G services without code modifications",
+      "expected": "TRUE"
+    },
+    {
+      "category": "D",
+      "id": "D4",
+      "claim": "0G operates on a pay-per-use model for computing resources",
+      "expected": "TRUE"
+    },
+    {
+      "category": "D",
+      "id": "D5",
+      "claim": "Airdrop recipients receive 33.3% of tokens immediately and the rest over 36 months",
+      "expected": "TRUE"
+    }
+  ]
+}

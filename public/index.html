@@ -1,503 +1,516 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Negravis - Decentralized Oracle Network</title>
     <meta name="description" content="Negravis - Next-generation decentralized oracle network powered by 0G Compute and advanced AI services">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.6.0/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'bounce-slow': 'bounce 3s infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-20px) rotate(180deg)' }
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 20px #64ffda' },
+                            '100%': { boxShadow: '0 0 40px #64ffda, 0 0 60px #64ffda' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        /* Header */
-        header {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 1rem 0;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: white;
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: #ffd700;
-        }
-
-        .nav-links .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
-        }
-
-        /* Hero Section */
-        .hero {
-            padding: 120px 0 80px;
-            text-align: center;
-            color: white;
-        }
-
-        .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
-            background: linear-gradient(45deg, #ffd700, #ffed4e);
+        .gradient-text {
+            background: linear-gradient(45deg, #64ffda, #ff6b6b, #4ecdc4, #45b7d1);
+            background-size: 300% 300%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            animation: gradient 3s ease infinite;
         }
-
-        .hero p {
-            font-size: 1.3rem;
-            margin-bottom: 2rem;
-            opacity: 0.9;
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
-
-        .cta-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, #ffd700, #ffed4e);
-            color: #333;
-            font-weight: bold;
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: white;
-            border: 2px solid white;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Features Section */
-        .features {
-            padding: 80px 0;
-            background: white;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 3rem;
-            color: #333;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        .feature-card {
-            background: #f8f9fa;
-            padding: 2rem;
-            border-radius: 15px;
-            text-align: center;
-            transition: transform 0.3s;
-            border: 1px solid #e9ecef;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .feature-icon {
-            font-size: 3rem;
-            color: #667eea;
-            margin-bottom: 1rem;
-        }
-
-        .feature-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: #333;
-        }
-
-        /* Tech Stack */
-        .tech-stack {
-            padding: 80px 0;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        }
-
-        .tech-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .tech-item {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .tech-item i {
-            font-size: 2.5rem;
-            color: #667eea;
-            margin-bottom: 1rem;
-        }
-
-        /* Stats Section */
-        .stats {
-            padding: 80px 0;
-            background: #333;
-            color: white;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-            text-align: center;
-        }
-
-        .stat-item h3 {
-            font-size: 3rem;
-            color: #ffd700;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Footer */
-        footer {
-            background: #222;
-            color: white;
-            padding: 40px 0;
-            text-align: center;
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .footer-links a {
-            color: white;
-            text-decoration: none;
-            font-size: 1.5rem;
-            transition: color 0.3s;
-        }
-
-        .footer-links a:hover {
-            color: #ffd700;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-
-            .nav-links {
-                display: none;
-            }
-
-            .cta-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .btn {
-                width: 200px;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .fade-in {
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        /* Particles Background */
-        .particles {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: -1;
-        }
-
+        
         .particle {
             position: absolute;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(100, 255, 218, 0.3);
             border-radius: 50%;
             animation: float 6s ease-in-out infinite;
         }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
+        
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .animate-spin-slow {
+            animation: spin-slow 3s linear infinite;
         }
     </style>
 </head>
-<body>
-    <!-- Header -->
-    <header>
-        <nav class="container">
-            <a href="#" class="logo">Negravis</a>
-            <ul class="nav-links">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#technology">Technology</a></li>
+<body class="bg-gradient-to-br from-base-300 via-base-200 to-base-100 min-h-screen">
+    <!-- Navbar -->
+    <div class="navbar glass fixed top-0 z-50 px-4">
+        <div class="navbar-start">
+            <div class="dropdown">
+                <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"></path>
+                    </svg>
+                </div>
+                <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                    <li><a href="#features" class="hover:text-accent">Features</a></li>
+                    <li><a href="#technology" class="hover:text-accent">Technology</a></li>
+                    <li><a href="/docs" class="hover:text-accent">API Docs</a></li>
+                </ul>
+            </div>
+            <a class="btn btn-ghost text-xl font-bold gradient-text">Negravis</a>
+        </div>
+        <div class="navbar-center hidden lg:flex">
+            <ul class="menu menu-horizontal px-1">
+                <li><a href="#features" class="hover:text-accent transition-colors">Features</a></li>
+                <li><a href="#technology" class="hover:text-accent transition-colors">Technology</a></li>
+                <li><a href="/docs" class="hover:text-accent transition-colors">API Docs</a></li>
             </ul>
-        </nav>
-    </header>
+        </div>
+        <div class="navbar-end">
+            <a href="/oracle" class="btn btn-accent btn-sm animate-glow">Launch Oracle</a>
+        </div>
+    </div>
 
     <!-- Hero Section -->
-    <section class="hero">
-        <div class="particles">
-            <div class="particle" style="left: 10%; animation-delay: 0s; width: 10px; height: 10px;"></div>
-            <div class="particle" style="left: 20%; animation-delay: 1s; width: 15px; height: 15px;"></div>
-            <div class="particle" style="left: 30%; animation-delay: 2s; width: 8px; height: 8px;"></div>
-            <div class="particle" style="left: 40%; animation-delay: 3s; width: 12px; height: 12px;"></div>
-            <div class="particle" style="left: 50%; animation-delay: 4s; width: 6px; height: 6px;"></div>
-            <div class="particle" style="left: 60%; animation-delay: 5s; width: 14px; height: 14px;"></div>
-            <div class="particle" style="left: 70%; animation-delay: 6s; width: 9px; height: 9px;"></div>
-            <div class="particle" style="left: 80%; animation-delay: 7s; width: 11px; height: 11px;"></div>
-            <div class="particle" style="left: 90%; animation-delay: 8s; width: 7px; height: 7px;"></div>
+    <div class="hero min-h-screen bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 relative overflow-hidden">
+        <!-- Animated Background Particles -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="particle animate-float" style="left: 10%; top: 20%; width: 10px; height: 10px; animation-delay: 0s;"></div>
+            <div class="particle animate-float" style="left: 20%; top: 60%; width: 15px; height: 15px; animation-delay: 1s;"></div>
+            <div class="particle animate-float" style="left: 30%; top: 30%; width: 8px; height: 8px; animation-delay: 2s;"></div>
+            <div class="particle animate-float" style="left: 70%; top: 70%; width: 12px; height: 12px; animation-delay: 3s;"></div>
+            <div class="particle animate-float" style="left: 80%; top: 40%; width: 6px; height: 6px; animation-delay: 4s;"></div>
+            <div class="particle animate-float" style="left: 90%; top: 80%; width: 14px; height: 14px; animation-delay: 5s;"></div>
         </div>
-        <div class="container fade-in">
-            <h1>Negravis</h1>
-            <p>Next-Generation Decentralized Oracle Network</p>
-            <p>Powered by <a href="https://0g.ai/" target="_blank" style="color: #64ffda; text-decoration: none;">0G.AI</a> and <a href="https://www.fluence.network/" target="_blank" style="color: #64ffda; text-decoration: none;">Fluence Network</a> with Advanced AI Services</p>
-            <div class="cta-buttons">
-                <a href="/docs" class="btn btn-primary">Explore API</a>
-                <a href="/oracle" class="btn btn-primary">Launch Oracle</a>
-                <a href="#features" class="btn btn-secondary">Learn More</a>
+        
+        <div class="hero-content text-center relative z-10">
+            <div class="max-w-4xl">
+                <div class="mb-8">
+                    <h1 class="text-6xl md:text-8xl font-bold gradient-text mb-4 animate-pulse">
+                        Negravis
+                    </h1>
+                    <div class="badge badge-accent badge-lg mb-4 animate-bounce">🚀 Next-Gen Oracle</div>
+                </div>
+                
+                <p class="text-xl md:text-2xl mb-4 text-base-content/80">
+                    <span class="font-bold text-accent">Next-Generation Decentralized Oracle Network</span>
+                </p>
+                
+                <p class="text-lg mb-8 text-base-content/70">
+                    Powered by 
+                    <a href="https://0g.ai/" target="_blank" class="link link-accent font-semibold hover:text-accent-focus transition-colors">
+                        0G.AI
+                    </a> 
+                    and 
+                    <a href="https://www.fluence.network/" target="_blank" class="link link-accent font-semibold hover:text-accent-focus transition-colors">
+                        Fluence Network
+                    </a> 
+                    with advanced AI capabilities
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <a href="/oracle" class="btn btn-accent btn-lg animate-glow hover:scale-105 transition-transform">
+                        <i class="fas fa-rocket mr-2"></i>
+                        Launch Oracle Now
+                    </a>
+                    <a href="/docs" class="btn btn-outline btn-lg hover:scale-105 transition-transform">
+                        <i class="fas fa-book mr-2"></i>
+                        Explore API
+                    </a>
+                    <a href="#features" class="btn btn-ghost btn-lg hover:scale-105 transition-transform">
+                        <i class="fas fa-arrow-down mr-2"></i>
+                        See Features
+                    </a>
+                </div>
+                
+                <div class="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+                    <div class="stat bg-base-100/20 backdrop-blur-md rounded-2xl border border-accent/20 hover:border-accent/40 transition-all duration-300 hover:scale-105 shadow-lg p-6">
+                        <div class="stat-figure text-accent mb-2">
+                            <i class="fas fa-chart-line text-3xl"></i>
+                        </div>
+                        <div class="stat-value text-4xl font-bold text-accent mb-1">99.9%</div>
+                        <div class="stat-title text-accent font-semibold text-lg mb-1">Uptime Guarantee</div>
+                        <div class="stat-desc text-base-content/60 text-sm">Always online</div>
+                    </div>
+                    <div class="stat bg-base-100/20 backdrop-blur-md rounded-2xl border border-secondary/20 hover:border-secondary/40 transition-all duration-300 hover:scale-105 shadow-lg p-6">
+                        <div class="stat-figure text-secondary mb-2">
+                            <i class="fas fa-bolt text-3xl"></i>
+                        </div>
+                        <div class="stat-value text-4xl font-bold text-secondary mb-1">&lt;100ms</div>
+                        <div class="stat-title text-secondary font-semibold text-lg mb-1">Average Response Time</div>
+                        <div class="stat-desc text-base-content/60 text-sm">Lightning fast</div>
+                    </div>
+                    <div class="stat bg-base-100/20 backdrop-blur-md rounded-2xl border border-primary/20 hover:border-primary/40 transition-all duration-300 hover:scale-105 shadow-lg p-6">
+                        <div class="stat-figure text-primary mb-2">
+                            <i class="fas fa-clock text-3xl"></i>
+                        </div>
+                        <div class="stat-value text-4xl font-bold text-primary mb-1">24/7</div>
+                        <div class="stat-title text-primary font-semibold text-lg mb-1">Continuous Operation</div>
+                        <div class="stat-desc text-base-content/60 text-sm">Never stops</div>
+                    </div>
+                    <div class="stat bg-base-100/20 backdrop-blur-md rounded-2xl border border-info/20 hover:border-info/40 transition-all duration-300 hover:scale-105 shadow-lg p-6">
+                        <div class="stat-figure text-info mb-2">
+                            <i class="fas fa-infinity text-3xl"></i>
+                        </div>
+                        <div class="stat-value text-4xl font-bold text-info mb-1">∞</div>
+                        <div class="stat-title text-info font-semibold text-lg mb-1">Scalability Potential</div>
+                        <div class="stat-desc text-base-content/60 text-sm">Unlimited scale</div>
+                    </div>
+                </div>
             </div>
         </div>
-    </section>
+    </div>
 
     <!-- Features Section -->
-    <section id="features" class="features">
-        <div class="container">
-            <h2 class="section-title">Revolutionary Oracle Features</h2>
-            <div class="features-grid">
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-brain"></i>
+    <section id="features" class="py-20 bg-base-200">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-6xl font-bold gradient-text mb-4">Why Negravis Rocks</h2>
+                <p class="text-xl text-base-content/70">Because your oracle shouldn't be an afterthought</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 glass">
+                    <div class="card-body text-center">
+                        <div class="text-6xl mb-4 animate-bounce">⚡</div>
+                        <h3 class="card-title justify-center text-accent mb-2">Lightning Fast</h3>
+                        <p class="text-base-content/70">Sub-second response times because waiting is for peasants. Optimized RPC endpoints with intelligent failover.</p>
+                        <div class="badge badge-accent badge-outline mt-2">&lt;100ms</div>
                     </div>
-                    <h3>AI-Powered Oracles</h3>
-                    <p>Leverage advanced AI models including Llama-3.3-70B and DeepSeek-R1-70B for intelligent data processing and validation.</p>
                 </div>
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
+                
+                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 glass">
+                    <div class="card-body text-center">
+                        <div class="text-6xl mb-4 animate-pulse">🔒</div>
+                        <h3 class="card-title justify-center text-accent mb-2">Enterprise Security</h3>
+                         <p class="text-base-content/70">Built on 0G.AI's robust infrastructure with enterprise-grade security protocols and comprehensive threat protection.</p>
+                        <div class="badge badge-success badge-outline mt-2">99.9% Uptime</div>
                     </div>
-                    <h3>TEE Verification</h3>
-                    <p>Trusted Execution Environment ensures cryptographic proof of data integrity and computation authenticity.</p>
                 </div>
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-network-wired"></i>
+                
+                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 glass">
+                    <div class="card-body text-center">
+                        <div class="text-6xl mb-4 animate-spin-slow">🤖</div>
+                        <h3 class="card-title justify-center text-accent mb-2">AI That Works</h3>
+                        <p class="text-base-content/70">Advanced AI models that actually understand you. No more "I'm sorry, I didn't understand that."</p>
+                        <div class="badge badge-primary badge-outline mt-2">GPT-4 Ready</div>
                     </div>
-                    <h3>Multi-Chain Infrastructure</h3>
-                    <p>Leveraging 0G.AI's modular blockchain and Fluence's decentralized compute for unmatched scalability and reliability.</p>
                 </div>
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-bolt"></i>
+                
+                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 glass">
+                    <div class="card-body text-center">
+                        <div class="text-6xl mb-4 animate-bounce">🌐</div>
+                        <h3 class="card-title justify-center text-accent mb-2">Actually Decentralized</h3>
+                        <p class="text-base-content/70">Powered by Fluence's P2P network. No single point of failure, no corporate overlords.</p>
+                        <div class="badge badge-secondary badge-outline mt-2">P2P Network</div>
                     </div>
-                    <h3>Real-time Processing</h3>
-                    <p>Lightning-fast data feeds with automatic micropayment processing and instant settlement.</p>
                 </div>
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-code"></i>
+                
+                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 glass">
+                    <div class="card-body text-center">
+                        <div class="text-6xl mb-4 animate-pulse">💰</div>
+                        <h3 class="card-title justify-center text-accent mb-2">Transparent Pricing</h3>
+                         <p class="text-base-content/70">Clear, transparent pricing model with no hidden fees or surprise charges. Pay-as-you-use billing with detailed cost tracking.</p>
+                        <div class="badge badge-warning badge-outline mt-2">Pay-as-you-go</div>
                     </div>
-                    <h3>Developer-Friendly API</h3>
-                    <p>RESTful API with comprehensive documentation, TypeScript SDK, and Swagger integration.</p>
                 </div>
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-coins"></i>
+                
+                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 glass">
+                    <div class="card-body text-center">
+                        <div class="text-6xl mb-4 animate-bounce">🔧</div>
+                        <h3 class="card-title justify-center text-accent mb-2">Dev-Friendly</h3>
+                        <p class="text-base-content/70">Simple REST API, docs that don't suck, and SDKs that actually work. Your sanity will thank you.</p>
+                        <div class="badge badge-info badge-outline mt-2">REST API</div>
                     </div>
-                    <h3>Automated Payments</h3>
-                    <p>Seamless blockchain-based payment processing with automatic ledger management and cost optimization.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Technology Stack -->
-    <section id="technology" class="tech-stack">
-        <div class="container">
-            <h2 class="section-title">Powered by Cutting-Edge Technology</h2>
-            <div class="tech-grid">
-                <div class="tech-item">
-                    <i class="fas fa-rocket"></i>
-                    <h4><a href="https://0g.ai/" target="_blank" style="color: #667eea; text-decoration: none;">0G.AI</a></h4>
-                    <p>Modular blockchain infrastructure</p>
+    <!-- Technology Section -->
+    <section id="technology" class="py-20 bg-gradient-to-br from-base-300 to-base-100">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-6xl font-bold gradient-text mb-4">Advanced Technology Stack</h2>
+                 <p class="text-xl text-base-content/70">Built on proven, cutting-edge infrastructure from industry leaders</p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 glass">
+                    <figure class="px-10 pt-10">
+                        <div class="avatar">
+                            <div class="w-20 rounded-full ring ring-accent ring-offset-base-100 ring-offset-2">
+                                <img src="https://0g.ai/favicon.ico" alt="0G.AI" />
+                            </div>
+                        </div>
+                    </figure>
+                    <div class="card-body items-center text-center">
+                        <h3 class="card-title text-accent text-2xl">0G.AI</h3>
+                        <p class="text-base-content/70">Modular blockchain that's actually fast. Sub-second finality because life's too short for slow chains.</p>
+                        <div class="card-actions">
+                            <a href="https://0g.ai/" target="_blank" class="btn btn-accent btn-outline hover:btn-accent">
+                                <i class="fas fa-external-link-alt mr-2"></i>
+                                Check it out
+                            </a>
+                        </div>
+                        <div class="badge badge-accent badge-sm mt-2">Infinite Scale</div>
+                    </div>
                 </div>
-                <div class="tech-item">
-                    <i class="fas fa-cloud"></i>
-                    <h4><a href="https://www.fluence.network/" target="_blank" style="color: #667eea; text-decoration: none;">Fluence Network</a></h4>
-                    <p>Decentralized compute platform</p>
+                
+                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 glass">
+                    <figure class="px-10 pt-10">
+                        <div class="avatar">
+                            <div class="w-20 rounded-full ring ring-secondary ring-offset-base-100 ring-offset-2">
+                                <img src="https://www.fluence.network/favicon.ico" alt="Fluence" />
+                            </div>
+                        </div>
+                    </figure>
+                    <div class="card-body items-center text-center">
+                        <h3 class="card-title text-secondary text-2xl">Fluence Network</h3>
+                        <p class="text-base-content/70">Decentralized compute that doesn't rely on AWS. P2P serverless that actually works.</p>
+                        <div class="card-actions">
+                            <a href="https://www.fluence.network/" target="_blank" class="btn btn-secondary btn-outline hover:btn-secondary">
+                                <i class="fas fa-external-link-alt mr-2"></i>
+                                Dive deeper
+                            </a>
+                        </div>
+                        <div class="badge badge-secondary badge-sm mt-2">Unstoppable</div>
+                    </div>
                 </div>
-                <div class="tech-item">
-                    <i class="fab fa-node-js"></i>
-                    <h4>TypeScript</h4>
-                    <p>Type-safe development</p>
-                </div>
-                <div class="tech-item">
-                    <i class="fas fa-server"></i>
-                    <h4>Express.js</h4>
-                    <p>High-performance API server</p>
-                </div>
-                <div class="tech-item">
-                    <i class="fas fa-lock"></i>
-                    <h4>TEE Security</h4>
-                    <p>Trusted execution environment</p>
-                </div>
-                <div class="tech-item">
-                    <i class="fas fa-file-contract"></i>
-                    <h4>Smart Contracts</h4>
-                    <p>Automated payment processing</p>
+                
+                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 glass">
+                    <figure class="px-10 pt-10">
+                        <div class="avatar">
+                            <div class="w-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 bg-white p-2">
+                                <div class="text-4xl">🤖</div>
+                            </div>
+                        </div>
+                    </figure>
+                    <div class="card-body items-center text-center">
+                        <h3 class="card-title text-primary text-2xl">AI Models</h3>
+                        <p class="text-base-content/70">State-of-the-art language models that don't hallucinate your data into oblivion.</p>
+                        <div class="card-actions">
+                            <a href="#features" class="btn btn-primary btn-outline hover:btn-primary">
+                                <i class="fas fa-brain mr-2"></i>
+                                See AI magic
+                            </a>
+                        </div>
+                        <div class="badge badge-primary badge-sm mt-2">GPT-4 Ready</div>
+                    </div>
                 </div>
             </div>
+            
+            <!-- Tech Timeline -->
+            <div class="divider text-2xl font-bold text-accent">How It All Works</div>
+            
+            <ul class="timeline timeline-snap-icon max-md:timeline-compact timeline-vertical">
+                <li>
+                    <div class="timeline-middle">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-accent">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L8.93 10.5a.75.75 0 00-1.06 1.061l1.884 1.884a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="timeline-start md:text-end mb-10">
+                        <time class="font-mono italic text-accent">Step 1</time>
+                        <div class="text-lg font-black">Request Hits Our API</div>
+                        Your query lands on our lightning-fast REST endpoints
+                    </div>
+                    <hr class="bg-accent"/>
+                </li>
+                <li>
+                    <hr class="bg-accent"/>
+                    <div class="timeline-middle">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-secondary">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L8.93 10.5a.75.75 0 00-1.06 1.061l1.884 1.884a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="timeline-end mb-10">
+                        <time class="font-mono italic text-secondary">Step 2</time>
+                        <div class="text-lg font-black">Fluence Takes Over</div>
+                        Distributed across P2P nodes for maximum resilience
+                    </div>
+                    <hr class="bg-secondary"/>
+                </li>
+                <li>
+                    <hr class="bg-secondary"/>
+                    <div class="timeline-middle">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-primary">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L8.93 10.5a.75.75 0 00-1.06 1.061l1.884 1.884a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="timeline-start md:text-end mb-10">
+                        <time class="font-mono italic text-primary">Step 3</time>
+                        <div class="text-lg font-black">AI Does Its Thing</div>
+                        Advanced models process your data with surgical precision
+                    </div>
+                    <hr class="bg-primary"/>
+                </li>
+                <li>
+                    <hr class="bg-primary"/>
+                    <div class="timeline-middle">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-success">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L8.93 10.5a.75.75 0 00-1.06 1.061l1.884 1.884a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="timeline-end mb-10">
+                        <time class="font-mono italic text-success">Step 4</time>
+                        <div class="text-lg font-black">0G Settles Everything</div>
+                        Payments processed and results delivered in milliseconds
+                    </div>
+                </li>
+            </ul>
         </div>
     </section>
 
     <!-- Stats Section -->
-    <section class="stats">
-        <div class="container">
-            <h2 class="section-title" style="color: white;">Network Statistics</h2>
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <h3>99.9%</h3>
-                    <p>Uptime Guarantee</p>
+    <section class="py-20 bg-gradient-to-br from-base-200 to-base-300">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-6xl font-bold gradient-text mb-4">Network Statistics</h2>
+                <p class="text-xl text-base-content/70">Real-time performance metrics that matter</p>
+            </div>
+            
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                <div class="stat bg-base-100/30 backdrop-blur-md rounded-3xl border border-accent/30 hover:border-accent/60 transition-all duration-300 hover:scale-105 shadow-xl p-8">
+                    <div class="stat-figure text-accent mb-4">
+                        <i class="fas fa-chart-line text-4xl"></i>
+                    </div>
+                    <div class="stat-value text-5xl font-bold text-accent mb-2">99.9%</div>
+                    <div class="stat-title text-accent font-semibold text-xl mb-2">Uptime Guarantee</div>
+                    <div class="stat-desc text-base-content/60">Always online, always reliable</div>
                 </div>
-                <div class="stat-item">
-                    <h3>&lt;100ms</h3>
-                    <p>Average Response Time</p>
+                
+                <div class="stat bg-base-100/30 backdrop-blur-md rounded-3xl border border-secondary/30 hover:border-secondary/60 transition-all duration-300 hover:scale-105 shadow-xl p-8">
+                    <div class="stat-figure text-secondary mb-4">
+                        <i class="fas fa-bolt text-4xl"></i>
+                    </div>
+                    <div class="stat-value text-5xl font-bold text-secondary mb-2">&lt;100ms</div>
+                    <div class="stat-title text-secondary font-semibold text-xl mb-2">Average Response Time</div>
+                    <div class="stat-desc text-base-content/60">Lightning-fast performance</div>
                 </div>
-                <div class="stat-item">
-                    <h3>24/7</h3>
-                    <p>Continuous Operation</p>
+                
+                <div class="stat bg-base-100/30 backdrop-blur-md rounded-3xl border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-105 shadow-xl p-8">
+                    <div class="stat-figure text-primary mb-4">
+                        <i class="fas fa-clock text-4xl"></i>
+                    </div>
+                    <div class="stat-value text-5xl font-bold text-primary mb-2">24/7</div>
+                    <div class="stat-title text-primary font-semibold text-xl mb-2">Continuous Operation</div>
+                    <div class="stat-desc text-base-content/60">Never stops, never sleeps</div>
                 </div>
-                <div class="stat-item">
-                    <h3>∞</h3>
-                    <p>Scalability Potential</p>
+                
+                <div class="stat bg-base-100/30 backdrop-blur-md rounded-3xl border border-info/30 hover:border-info/60 transition-all duration-300 hover:scale-105 shadow-xl p-8">
+                    <div class="stat-figure text-info mb-4">
+                        <i class="fas fa-infinity text-4xl"></i>
+                    </div>
+                    <div class="stat-value text-5xl font-bold text-info mb-2">∞</div>
+                    <div class="stat-title text-info font-semibold text-xl mb-2">Scalability Potential</div>
+                    <div class="stat-desc text-base-content/60">Unlimited growth capacity</div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 40px 0; margin-top: 80px; border-top: 1px solid rgba(100, 255, 218, 0.1);">
-        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px; text-align: center;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; margin-bottom: 30px;">
-                <div>
-                    <h4 style="color: #64ffda; margin-bottom: 15px; font-size: 1.1rem;">Powered By</h4>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <a href="https://0g.ai/" target="_blank" style="color: #ccd6f6; text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#64ffda'" onmouseout="this.style.color='#ccd6f6'">
-                            🚀 0G.AI - Modular AI Blockchain
-                        </a>
-                        <a href="https://www.fluence.network/" target="_blank" style="color: #ccd6f6; text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#64ffda'" onmouseout="this.style.color='#ccd6f6'">
-                            ☁️ Fluence Network - Decentralized Compute
-                        </a>
+    <footer class="footer footer-center bg-base-300 text-base-content p-10">
+        <div class="container mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <!-- Brand Section -->
+                <div class="md:col-span-1">
+                    <div class="flex flex-col items-center md:items-start">
+                        <h3 class="text-3xl font-bold gradient-text mb-4">Negravis</h3>
+                        <p class="text-base-content/70 text-center md:text-left mb-4">
+                            The oracle network that doesn't make you want to cry. Built for developers who value their sanity.
+                        </p>
+                        <div class="flex gap-4">
+                            <a href="#" class="btn btn-circle btn-outline btn-sm hover:btn-accent transition-colors" aria-label="Twitter">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="#" class="btn btn-circle btn-outline btn-sm hover:btn-accent transition-colors" aria-label="GitHub">
+                                <i class="fab fa-github"></i>
+                            </a>
+                            <a href="#" class="btn btn-circle btn-outline btn-sm hover:btn-accent transition-colors" aria-label="Discord">
+                                <i class="fab fa-discord"></i>
+                            </a>
+                            <a href="#" class="btn btn-circle btn-outline btn-sm hover:btn-accent transition-colors" aria-label="Telegram">
+                                <i class="fab fa-telegram"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
+                
+                <!-- Product Links -->
                 <div>
-                    <h4 style="color: #64ffda; margin-bottom: 15px; font-size: 1.1rem;">Technology Stack</h4>
-                    <div style="color: #8892b0; font-size: 0.9rem; line-height: 1.6;">
-                        TEE Verification • Cryptographic Proofs<br>
-                        Micropayments • AI Inference<br>
-                        REST API • WebSocket Support
-                    </div>
+                    <h4 class="text-lg font-bold text-accent mb-4">Product</h4>
+                    <ul class="space-y-2">
+                        <li><a href="/docs" class="link link-hover hover:text-accent transition-colors">API Docs</a></li>
+                        <li><a href="/oracle" class="link link-hover hover:text-accent transition-colors">Oracle Dashboard</a></li>
+                        <li><a href="#features" class="link link-hover hover:text-accent transition-colors">Features</a></li>
+                        <li><a href="#technology" class="link link-hover hover:text-accent transition-colors">Tech Stack</a></li>
+                    </ul>
                 </div>
+                
+                <!-- Developer Links -->
                 <div>
-                    <h4 style="color: #64ffda; margin-bottom: 15px; font-size: 1.1rem;">Resources</h4>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <a href="/docs" style="color: #ccd6f6; text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#64ffda'" onmouseout="this.style.color='#ccd6f6'">
-                            📚 API Documentation
-                        </a>
-                        <a href="/api" style="color: #ccd6f6; text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#64ffda'" onmouseout="this.style.color='#ccd6f6'">
-                            🔧 API Endpoints
-                        </a>
-                    </div>
+                    <h4 class="text-lg font-bold text-secondary mb-4">Developers</h4>
+                    <ul class="space-y-2">
+                        <li><a href="/docs" class="link link-hover hover:text-secondary transition-colors">Quick Start</a></li>
+                        <li><a href="/docs#api" class="link link-hover hover:text-secondary transition-colors">API Reference</a></li>
+                        <li><a href="#" class="link link-hover hover:text-secondary transition-colors">SDK Downloads</a></li>
+                        <li><a href="#" class="link link-hover hover:text-secondary transition-colors">Code Examples</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Resources -->
+                <div>
+                    <h4 class="text-lg font-bold text-primary mb-4">Resources</h4>
+                    <ul class="space-y-2">
+                        <li><a href="https://0g.ai/" target="_blank" class="link link-hover hover:text-primary transition-colors">0G.AI</a></li>
+                        <li><a href="https://www.fluence.network/" target="_blank" class="link link-hover hover:text-primary transition-colors">Fluence Network</a></li>
+                        <li><a href="#" class="link link-hover hover:text-primary transition-colors">Blog</a></li>
+                        <li><a href="#" class="link link-hover hover:text-primary transition-colors">Support</a></li>
+                    </ul>
                 </div>
             </div>
-            <div style="border-top: 1px solid rgba(100, 255, 218, 0.1); padding-top: 20px; color: #8892b0; font-size: 0.9rem;">
-                <p style="margin: 0;">Negravis Oracle Network - Bridging AI and Blockchain with Decentralized Infrastructure</p>
-                <p style="margin: 5px 0 0 0; font-size: 0.8rem;">Built with 0G.AI's modular blockchain technology and Fluence Network's decentralized compute platform</p>
+            
+            <!-- Bottom Section -->
+            <div class="divider"></div>
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-base-content/60">
+                    &copy; 2024 Negravis. Built with ❤️ and a healthy dose of sarcasm for the decentralized future.
+                </p>
+                <div class="flex gap-2">
+                    <div class="badge badge-accent badge-outline">Powered by 0G.AI</div>
+                    <div class="badge badge-secondary badge-outline">Fluence Network</div>
+                </div>
             </div>
         </div>
     </footer>
