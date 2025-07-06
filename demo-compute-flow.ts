@@ -33,11 +33,45 @@ async function testComputeFlow() {
       throw new Error('PRIVATE_KEY is required in .env file');
     }
     
-    const provider = new ethers.JsonRpcProvider("https://evmrpc-testnet.0g.ai");
+// Multiple RPC endpoints for failover
+    const rpcEndpoints = [
+        "https://evmrpc-testnet.0g.ai",
+        "https://rpc-testnet.0g.ai",
+        "https://solitary-dark-replica.0g-galileo.quiknode.pro/fa3c1846187697dfa72f19acdfffd0d0adb34064/"
+    ];
+    
+    let provider;
+    let connectedEndpoint;
+    
+    console.log("⏳ Testing RPC endpoints for connectivity...");
+    
+    for (const endpoint of rpcEndpoints) {
+        try {
+            console.log(`🔍 Testing: ${endpoint}`);
+            const testProvider = new ethers.JsonRpcProvider(endpoint);
+            
+            // Test connection with a simple call
+            await testProvider.getNetwork();
+            
+            provider = testProvider;
+            connectedEndpoint = endpoint;
+            console.log(`✅ Connected to: ${endpoint}`);
+            break;
+        } catch (error: any) {
+            console.log(`❌ Failed to connect to ${endpoint}: ${error.message}`);
+            continue;
+        }
+    }
+    
+    if (!provider) {
+        throw new Error('All RPC endpoints failed. Please check your internet connection or try again later.');
+    }
+    
     const wallet = new ethers.Wallet(privateKey, provider);
     
     console.log(`✅ Wallet Address: ${wallet.address}`);
-    console.log(`✅ RPC URL: https://evmrpc-testnet.0g.ai`);
+    console.log(`✅ Active RPC URL: ${connectedEndpoint}`);
+    
     
     // Check wallet balance
     const balance = await provider.getBalance(wallet.address);

@@ -340,6 +340,145 @@
                 opacity: 1;
             }
         }
+
+        /* Additional Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(102, 126, 234, 0.6);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .slide-in-left {
+            animation: slideInLeft 0.6s ease-out;
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+
+        .glow-animation {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        /* Particles Background */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        /* Enhanced Button Animations */
+        .agent-launch-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .agent-launch-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .agent-launch-btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        /* Message Animation */
+        .message {
+            animation: messageSlide 0.4s ease-out;
+        }
+
+        /* Typing Indicator Animation */
+        .typing-indicator {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        /* Agent Selection Animation */
+        .agent-selection {
+            transition: all 0.3s ease;
+        }
+
+        .agent-selection:hover {
+             transform: translateY(-2px);
+             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+         }
+
+         /* Shake animation for errors */
+         @keyframes shake {
+             0%, 100% { transform: translateX(0); }
+             25% { transform: translateX(-5px); }
+             75% { transform: translateX(5px); }
+         }
     </style>
 </head>
 <body>
@@ -357,17 +496,28 @@
     </header>
 
     <!-- Main Content -->
+    <div class="particles">
+        <div class="particle" style="left: 10%; animation-delay: 0s; width: 8px; height: 8px;"></div>
+        <div class="particle" style="left: 20%; animation-delay: 1s; width: 12px; height: 12px;"></div>
+        <div class="particle" style="left: 30%; animation-delay: 2s; width: 6px; height: 6px;"></div>
+        <div class="particle" style="left: 40%; animation-delay: 3s; width: 10px; height: 10px;"></div>
+        <div class="particle" style="left: 50%; animation-delay: 4s; width: 14px; height: 14px;"></div>
+        <div class="particle" style="left: 60%; animation-delay: 5s; width: 9px; height: 9px;"></div>
+        <div class="particle" style="left: 70%; animation-delay: 6s; width: 11px; height: 11px;"></div>
+        <div class="particle" style="left: 80%; animation-delay: 7s; width: 7px; height: 7px;"></div>
+        <div class="particle" style="left: 90%; animation-delay: 8s; width: 13px; height: 13px;"></div>
+    </div>
     <div class="container">
-        <div class="main-layout">
+        <div class="main-layout fade-in">
             <!-- Oracle Chatbot Panel -->
-            <div class="chatbot-panel">
+            <div class="chatbot-panel slide-in-right">
                 <div class="chatbot-header">
                     <div class="status-indicator"></div>
                     <div class="chatbot-title">Oracle Assistant</div>
                 </div>
 
                 <!-- Agent Selection -->
-                <div class="agent-selection">
+                <div class="agent-selection slide-in-left">
                     <label for="agentSelect" class="agent-label">Select AI Agent:</label>
                     <select id="agentSelect" class="agent-dropdown">
                         <option value="oracle-assistant">🔮 Oracle Assistant (Default)</option>
@@ -377,7 +527,7 @@
                         <option value="api-helper">📚 API Documentation Helper</option>
                     </select>
                     <div class="launch-button-container">
-                        <button class="launch-button" onclick="launchAgent()">🚀 Launch Agent</button>
+                        <button class="launch-button agent-launch-btn" onclick="launchAgent()">🚀 Launch Agent</button>
                     </div>
                 </div>
 
@@ -435,16 +585,26 @@
             const message = chatInput.value.trim();
             if (!message) return;
 
-            addMessage(message, true);
-            chatInput.value = '';
-            showTyping();
-
-            // Simulate API call delay
-            setTimeout(async () => {
-                hideTyping();
-                const response = await processMessage(message);
-                addMessage(response);
-            }, 1000 + Math.random() * 2000);
+            if (agentLaunched) {
+                // Add user message with animation
+                addMessageAnimated(message, true);
+                chatInput.value = '';
+                
+                // Add enhanced typing indicator with animation
+                showTyping();
+                
+                // Simulate response delay with random timing for realism
+                const responseDelay = Math.random() * 1000 + 1500;
+                setTimeout(async () => {
+                    hideTyping();
+                    const response = await processMessage(message);
+                    addMessageAnimated(response);
+                }, responseDelay);
+            } else {
+                // Shake the input if no agent is launched
+                chatInput.style.animation = 'shake 0.5s ease-in-out';
+                setTimeout(() => chatInput.style.animation = '', 500);
+            }
         }
 
         function sendQuickMessage(message) {
@@ -517,33 +677,68 @@
 
         function launchAgent() {
             const agentSelect = document.getElementById('agentSelect');
+            if (!agentSelect.value) {
+                // Add shake animation to button
+                const button = document.querySelector('.launch-button');
+                button.style.animation = 'shake 0.5s ease-in-out';
+                setTimeout(() => button.style.animation = '', 500);
+                alert('Please select an agent first!');
+                return;
+            }
+
             currentAgent = agentSelect.value;
             agentLaunched = true;
             
-            // Clear chat messages
-            chatMessages.innerHTML = '';
+            // Add loading animation
+            const button = document.querySelector('.launch-button');
+            button.textContent = '🚀 Launching...';
+            button.style.transform = 'scale(0.95)';
             
-            // Add agent-specific welcome message
-            const welcomeMessages = {
-                'oracle-assistant': '🔮 Oracle Assistant activated! I can help you test our AI services, check account balances, and explore our decentralized infrastructure. What would you like to try?',
-                'llama-3.3-70b': '🦙 Llama-3.3-70B-Instruct model is now active! I\'m a powerful language model running on 0G Compute Network with TEE verification. Ask me anything!',
-                'deepseek-r1-70b': '🧠 DeepSeek-R1-70B model activated! I specialize in reasoning and problem-solving. I\'m running on decentralized infrastructure with full TEE verification.',
-                'technical-advisor': '⚙️ Technical Advisor ready! I can help you with API integration, troubleshooting, and understanding the 0G Compute Network architecture.',
-                'api-helper': '📚 API Documentation Helper online! I can guide you through our endpoints, provide code examples, and help with implementation details.'
-            };
-            
-            addMessage(welcomeMessages[currentAgent]);
-            
-            // Update chatbot title
-            const chatbotTitle = document.querySelector('.chatbot-title');
-            const agentNames = {
-                'oracle-assistant': 'Oracle Assistant',
-                'llama-3.3-70b': 'Llama-3.3-70B',
-                'deepseek-r1-70b': 'DeepSeek-R1-70B',
-                'technical-advisor': 'Technical Advisor',
-                'api-helper': 'API Helper'
-            };
-            chatbotTitle.textContent = agentNames[currentAgent];
+            setTimeout(() => {
+                // Clear chat messages with fade out
+                chatMessages.style.opacity = '0.3';
+                
+                setTimeout(() => {
+                    chatMessages.innerHTML = '';
+                    chatMessages.style.opacity = '1';
+                    
+                    // Update chatbot title with animation
+                    const chatbotTitle = document.querySelector('.chatbot-title');
+                    chatbotTitle.style.transform = 'scale(1.1)';
+                    chatbotTitle.style.transition = 'all 0.3s ease';
+                    
+                    const agentNames = {
+                        'oracle-assistant': 'Oracle Assistant',
+                        'llama-3.3-70b': 'Llama-3.3-70B',
+                        'deepseek-r1-70b': 'DeepSeek-R1-70B',
+                        'technical-advisor': 'Technical Advisor',
+                        'api-helper': 'API Helper'
+                    };
+                    
+                    chatbotTitle.textContent = agentNames[currentAgent];
+                    
+                    setTimeout(() => {
+                        chatbotTitle.style.transform = 'scale(1)';
+                    }, 200);
+                    
+                    // Add agent-specific welcome message with animation
+                    const welcomeMessages = {
+                        'oracle-assistant': '🔮 Oracle Assistant activated! I can help you test our AI services, check account balances, and explore our decentralized infrastructure. What would you like to try?',
+                        'llama-3.3-70b': '🦙 Llama-3.3-70B-Instruct model is now active! I\'m a powerful language model running on 0G Compute Network with TEE verification. Ask me anything!',
+                        'deepseek-r1-70b': '🧠 DeepSeek-R1-70B model activated! I specialize in reasoning and problem-solving. I\'m running on decentralized infrastructure with full TEE verification.',
+                        'technical-advisor': '⚙️ Technical Advisor ready! I can help you with API integration, troubleshooting, and understanding the 0G Compute Network architecture.',
+                        'api-helper': '📚 API Documentation Helper online! I can guide you through our endpoints, provide code examples, and help with implementation details.'
+                    };
+                    
+                    setTimeout(() => {
+                        addMessageAnimated(welcomeMessages[currentAgent]);
+                    }, 300);
+                    
+                    // Reset button
+                    button.textContent = '🚀 Launch Agent';
+                    button.style.transform = 'scale(1)';
+                }, 300);
+            }, 800);
             
             // Focus on input
             chatInput.focus();
@@ -558,17 +753,63 @@
             
             // Agent-specific responses
             if (currentAgent === 'llama-3.3-70b') {
-                if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-                    return '🦙 Hello! I\'m Llama-3.3-70B running on 0G Compute Network. I can help with various tasks including coding, analysis, creative writing, and answering questions. What would you like to explore?';
+                try {
+                    const response = await fetch('/api/services/oracle/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: message,
+                            provider: 'llama-3.3-70b-instruct'
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            const costInfo = data.cost > 0 ? ` (Cost: ${data.cost.toFixed(6)} OG)` : '';
+                            return `🦙 **Llama-3.3-70B Response:**\n\n${data.response}${costInfo}`;
+                        } else {
+                            return `🦙 ⚠️ Error: ${data.error || 'Failed to get response from Llama model'}`;
+                        }
+                    } else {
+                        return '🦙 ⚠️ Unable to connect to Llama-3.3-70B service. Please try again.';
+                    }
+                } catch (error) {
+                    console.error('Llama API error:', error);
+                    return `🦙 [Fallback Response] I understand you\'re asking about "${message}". As a large language model running on decentralized infrastructure, I can help with complex reasoning, coding, and analysis tasks. (Note: Live AI service temporarily unavailable)`;
                 }
-                return `🦙 [Llama-3.3-70B Response] I understand you\'re asking about "${message}". As a large language model running on decentralized infrastructure, I can help with complex reasoning, coding, and analysis tasks. How can I assist you further?`;
             }
             
             if (currentAgent === 'deepseek-r1-70b') {
-                if (lowerMessage.includes('reasoning') || lowerMessage.includes('problem')) {
-                    return '🧠 I excel at step-by-step reasoning and problem decomposition. Present me with any complex problem and I\'ll break it down systematically using chain-of-thought reasoning.';
+                try {
+                    const response = await fetch('/api/services/oracle/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: message,
+                            provider: 'deepseek-r1-70b'
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            const costInfo = data.cost > 0 ? ` (Cost: ${data.cost.toFixed(6)} OG)` : '';
+                            return `🧠 **DeepSeek-R1-70B Analysis:**\n\n${data.response}${costInfo}`;
+                        } else {
+                            return `🧠 ⚠️ Error: ${data.error || 'Failed to get response from DeepSeek model'}`;
+                        }
+                    } else {
+                        return '🧠 ⚠️ Unable to connect to DeepSeek-R1-70B service. Please try again.';
+                    }
+                } catch (error) {
+                    console.error('DeepSeek API error:', error);
+                    return `🧠 [Fallback Response] Let me reason through "${message}"... This appears to be a query that requires systematic analysis. I\'m designed for advanced reasoning tasks on the 0G Compute Network. (Note: Live AI service temporarily unavailable)`;
                 }
-                return `🧠 [DeepSeek-R1-70B Analysis] Let me reason through "${message}"... This appears to be a query that requires systematic analysis. I\'m designed for advanced reasoning tasks on the 0G Compute Network.`;
             }
             
             if (currentAgent === 'technical-advisor') {
@@ -589,11 +830,19 @@
             }
             
             // Default Oracle Assistant responses (existing logic)
-            if (lowerMessage.includes('balance')) {
+            if (lowerMessage.includes('balance') || lowerMessage.includes('status')) {
                 try {
-                    const response = await fetch('/api/account/balance');
+                    const response = await fetch('/api/services/oracle/status');
                     if (response.ok) {
                         const data = await response.json();
+                        if (data.success && data.account) {
+                            return `💰 **Oracle Account Status:**\n\n• Wallet: ${data.account.walletAddress || 'Not connected'}\n• ETH Balance: ${data.account.ethBalance || '0'} ETH\n• Ledger Balance: ${data.account.ledgerBalance || '0'} OG\n• RPC: ${data.account.connectedRPC || 'Unknown'}\n• Service Ready: ${data.ready ? '✅ Yes' : '❌ No'}`;
+                        }
+                    }
+                    // Fallback to old endpoint
+                    const fallbackResponse = await fetch('/api/account/balance');
+                    if (fallbackResponse.ok) {
+                        const data = await fallbackResponse.json();
                         return `💰 Your current balance: ${data.balance || 'Loading...'} tokens. Ledger status: ${data.status || 'Active'}`;
                     }
                 } catch (error) {
@@ -601,11 +850,24 @@
                 }
             }
 
-            if (lowerMessage.includes('services') || lowerMessage.includes('list')) {
+            if (lowerMessage.includes('services') || lowerMessage.includes('list') || lowerMessage.includes('models')) {
                 try {
-                    const response = await fetch('/api/services/list');
+                    const response = await fetch('/api/services/oracle/models');
                     if (response.ok) {
                         const data = await response.json();
+                        if (data.success && data.models) {
+                            let modelList = '🤖 **Available Oracle AI Models:**\n\n';
+                            data.models.forEach(model => {
+                                modelList += `• **${model.name}**\n  Provider: ${model.provider}\n  ${model.description}\n\n`;
+                            });
+                            modelList += 'All services are TEE-verified and ready for use!';
+                            return modelList;
+                        }
+                    }
+                    // Fallback to old endpoint
+                    const fallbackResponse = await fetch('/api/services/list');
+                    if (fallbackResponse.ok) {
+                        const data = await fallbackResponse.json();
                         return `🤖 Available AI Services:\n• Llama-3.3-70B-Instruct\n• DeepSeek-R1-70B\n\nAll services are TEE-verified and ready for use!`;
                     }
                 } catch (error) {
@@ -640,10 +902,60 @@
             return `🤔 I understand you're asking about "${message}". Try using the quick actions above or ask about:\n\n• Account balance\n• Available services\n• Testing chat functionality\n• Provider status\n\nOr visit /docs for complete API documentation!`;
         }
 
+        // Dynamic particle generation
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 8 + 's';
+            particle.style.width = particle.style.height = (Math.random() * 12 + 6) + 'px';
+            particle.style.animationDuration = (Math.random() * 4 + 6) + 's';
+            document.querySelector('.particles').appendChild(particle);
+
+            setTimeout(() => {
+                if (particle.parentNode) {
+                    particle.remove();
+                }
+            }, 8000);
+        }
+
+        // Enhanced addMessage function with animations
+        function addMessageAnimated(message, isUser = false) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            messageDiv.textContent = message;
+            
+            // Add animation class
+            messageDiv.style.opacity = '0';
+            messageDiv.style.transform = 'translateY(20px) scale(0.95)';
+            
+            messagesContainer.appendChild(messageDiv);
+            
+            // Trigger animation
+            setTimeout(() => {
+                messageDiv.style.transition = 'all 0.4s ease-out';
+                messageDiv.style.opacity = '1';
+                messageDiv.style.transform = 'translateY(0) scale(1)';
+            }, 10);
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
         // Initialize with a welcome state
         document.addEventListener('DOMContentLoaded', () => {
-            // Show initial message to select agent
-            addMessage('🔮 Welcome to Negravis Oracle! This is your gateway to decentralized AI services powered by 0G.AI and Fluence Network. Please select an AI agent from the dropdown above and click "Launch Agent" to begin your session.');
+            // Create initial particles
+            for (let i = 0; i < 5; i++) {
+                setTimeout(createParticle, i * 1000);
+            }
+            
+            // Continue creating particles
+            setInterval(createParticle, 3000);
+            
+            // Show initial message with animation
+            setTimeout(() => {
+                addMessageAnimated('🔮 Welcome to Negravis Oracle! This is your gateway to decentralized AI services powered by 0G.AI and Fluence Network. Please select an AI agent from the dropdown above and click "Launch Agent" to begin your session.');
+            }, 500);
         });
     </script>
 </body>

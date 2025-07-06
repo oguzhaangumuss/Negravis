@@ -9,4 +9,9 @@ router.post('/query', serviceController.sendQuery);
 router.post('/settle-fee', serviceController.settleFee);
 router.post('/acknowledge-provider', serviceController.acknowledgeProvider);
 
-export default router; 
+// Oracle-specific routes
+router.post('/oracle/chat', serviceController.oracleChat);
+router.get('/oracle/models', serviceController.getOracleModels);
+router.get('/oracle/status', serviceController.getOracleStatus);
+
+export default router;

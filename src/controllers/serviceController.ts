@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { brokerService } from '../services/brokerService';
+import { oracleService, queryOracle, getOracleModels as getAvailableOracleModels, getOracleAccountInfo } from '../../oracle-compute-service';
 
 /**
  * Helper function to convert BigInt values to strings in an object
@@ -300,6 +301,171 @@ export const acknowledgeProvider = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       message: result
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /services/oracle/chat:
+ *   post:
+ *     summary: Send a chat message to Oracle AI services
+ *     tags: [Oracle]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - message
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 description: Chat message to send
+ *               provider:
+ *                 type: string
+ *                 description: AI provider to use (llama-3.3-70b-instruct or deepseek-r1-70b)
+ *                 enum: [llama-3.3-70b-instruct, deepseek-r1-70b]
+ *     responses:
+ *       200:
+ *         description: Chat response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 response:
+ *                   type: string
+ *                 chatId:
+ *                   type: string
+ *                 cost:
+ *                   type: number
+ *                 provider:
+ *                   type: string
+ *                 model:
+ *                   type: string
+ *       400:
+ *         description: Invalid request
+ *       500:
+ *         description: Server error
+ */
+export const oracleChat = async (req: Request, res: Response) => {
+  try {
+    const { message, provider } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        error: 'Message is required'
+      });
+    }
+    
+    const config = provider ? { provider } : {};
+    const result = await queryOracle(message, config);
+    
+    return res.status(200).json(result);
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /services/oracle/models:
+ *   get:
+ *     summary: Get available Oracle AI models
+ *     tags: [Oracle]
+ *     responses:
+ *       200:
+ *         description: List of available models
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 models:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                       provider:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *       500:
+ *         description: Server error
+ */
+export const getOracleModels = async (req: Request, res: Response) => {
+  try {
+    const models = await getAvailableOracleModels();
+    
+    return res.status(200).json({
+      success: true,
+      models: models
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /services/oracle/status:
+ *   get:
+ *     summary: Get Oracle service status and account information
+ *     tags: [Oracle]
+ *     responses:
+ *       200:
+ *         description: Oracle service status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 ready:
+ *                   type: boolean
+ *                 account:
+ *                   type: object
+ *                   properties:
+ *                     walletAddress:
+ *                       type: string
+ *                     ethBalance:
+ *                       type: string
+ *                     ledgerBalance:
+ *                       type: string
+ *                     connectedRPC:
+ *                       type: string
+ *       500:
+ *         description: Server error
+ */
+export const getOracleStatus = async (req: Request, res: Response) => {
+  try {
+    const accountInfo = await getOracleAccountInfo();
+    
+    return res.status(200).json({
+      success: true,
+      ready: oracleService.isReady(),
+      account: accountInfo
     });
   } catch (error: any) {
     return res.status(500).json({
