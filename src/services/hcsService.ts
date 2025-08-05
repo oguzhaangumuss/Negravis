@@ -45,9 +45,9 @@ export class HCSService {
     try {
       console.log("🔧 Initializing Hedera Consensus Service...");
 
-      // Set up operator (same private key as the main application)
+      // Set up operator (use Hedera-specific private key)
       const operatorId = process.env.HEDERA_ACCOUNT_ID;
-      const operatorKey = process.env.PRIVATE_KEY;
+      const operatorKey = process.env.HEDERA_PRIVATE_KEY || process.env.PRIVATE_KEY;
 
       if (!operatorKey) {
         throw new Error('PRIVATE_KEY is required for HCS integration');
