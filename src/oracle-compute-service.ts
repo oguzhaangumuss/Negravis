@@ -106,10 +106,13 @@ export class OracleComputeService {
       try {
         console.log("🔄 Initializing HCS service...");
         await hcsService.initialize();
+        console.log("✅ HCS client initialized, creating topics...");
         await hcsService.createTopics();
         console.log("✅ HCS service initialized and topics created");
+        console.log("🎯 Topic IDs:", hcsService.getTopicIds());
       } catch (hcsError: any) {
         console.log("⚠️ HCS initialization failed (non-critical):", hcsError.message);
+        console.log("📍 HCS Error stack:", hcsError.stack);
       }
 
       // Setup ledger account if needed

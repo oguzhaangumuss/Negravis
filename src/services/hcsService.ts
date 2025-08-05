@@ -173,8 +173,24 @@ export class HCSService {
       ...data
     };
 
-    await this.submitMessage(this.topicIds.oracleQueries, JSON.stringify(logEntry));
-    console.log(`📝 Oracle query logged to HCS: ${data.queryId}`);
+    try {
+      const jsonMessage = JSON.stringify(logEntry);
+      await this.submitMessage(this.topicIds.oracleQueries, jsonMessage);
+      console.log(`📝 Oracle query logged to HCS: ${data.queryId}`);
+    } catch (jsonError: any) {
+      console.log(`⚠️ Oracle query JSON serialization failed: ${jsonError.message}`);
+      // Try with simplified data
+      const simpleLogEntry = {
+        timestamp: logEntry.timestamp,
+        type: 'ORACLE_QUERY',
+        queryId: data.queryId,
+        success: data.success,
+        model: data.model,
+        cost: data.cost
+      };
+      await this.submitMessage(this.topicIds.oracleQueries, JSON.stringify(simpleLogEntry));
+      console.log(`📝 Oracle query logged to HCS (simplified): ${data.queryId}`);
+    }
   }
 
   /**
@@ -203,8 +219,23 @@ export class HCSService {
       ...data
     };
 
-    await this.submitMessage(this.topicIds.computeOperations, JSON.stringify(logEntry));
-    console.log(`📝 Compute operation logged to HCS: ${data.operationId}`);
+    try {
+      const jsonMessage = JSON.stringify(logEntry);
+      await this.submitMessage(this.topicIds.computeOperations, jsonMessage);
+      console.log(`📝 Compute operation logged to HCS: ${data.operationId}`);
+    } catch (jsonError: any) {
+      console.log(`⚠️ Compute operation JSON serialization failed: ${jsonError.message}`);
+      // Try with simplified data
+      const simpleLogEntry = {
+        timestamp: logEntry.timestamp,
+        type: 'COMPUTE_OPERATION',
+        operationId: data.operationId,
+        status: data.status,
+        provider: data.provider
+      };
+      await this.submitMessage(this.topicIds.computeOperations, JSON.stringify(simpleLogEntry));
+      console.log(`📝 Compute operation logged to HCS (simplified): ${data.operationId}`);
+    }
   }
 
   /**
