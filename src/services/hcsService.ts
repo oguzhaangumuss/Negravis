@@ -269,13 +269,17 @@ export class HCSService {
    */
   private async submitMessage(topicId: string, message: string): Promise<void> {
     try {
+      // Clean and validate JSON message
+      const cleanMessage = message.replace(/[\u0000-\u001F\u007F-\u009F]/g, ""); // Remove control characters
+      
       const submitTx = await new TopicMessageSubmitTransaction()
         .setTopicId(topicId)
-        .setMessage(message)
+        .setMessage(cleanMessage)
         .setMaxTransactionFee(new Hbar(1))
         .execute(this.client);
 
-      await submitTx.getReceipt(this.client);
+      const receipt = await submitTx.getReceipt(this.client);
+      console.log(`💾 HCS message submitted to topic ${topicId} - Sequence: ${receipt.topicSequenceNumber}`);
     } catch (error: any) {
       console.error(`❌ Failed to submit message to HCS topic ${topicId}:`, error.message);
       throw error;

@@ -2,7 +2,7 @@ import { ethers, JsonRpcProvider, formatEther, parseEther } from "ethers";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
 import OpenAI from "openai";
 import dotenv from "dotenv";
-import { logOracleQuery, logComputeOperation } from "./services/hcsService";
+import { logOracleQuery, logComputeOperation, hcsService } from "./services/hcsService";
 
 // Load environment variables
 dotenv.config();
@@ -101,6 +101,16 @@ export class OracleComputeService {
       console.log("⏳ Creating ZG Compute Network Broker...");
       this.broker = await createZGComputeNetworkBroker(this.wallet);
       console.log("✅ Broker created successfully");
+
+      // Initialize HCS service
+      try {
+        console.log("🔄 Initializing HCS service...");
+        await hcsService.initialize();
+        await hcsService.createTopics();
+        console.log("✅ HCS service initialized and topics created");
+      } catch (hcsError: any) {
+        console.log("⚠️ HCS initialization failed (non-critical):", hcsError.message);
+      }
 
       // Setup ledger account if needed
       await this.setupLedgerAccount();
