@@ -2,6 +2,7 @@ import { ethers, JsonRpcProvider, formatEther, parseEther } from "ethers";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
 import OpenAI from "openai";
 import dotenv from "dotenv";
+import { logOracleQuery, logComputeOperation } from "./services/hcsService";
 
 // Load environment variables
 dotenv.config();
@@ -157,6 +158,9 @@ export class OracleComputeService {
     query: string, 
     config: OracleConfig = {}
   ): Promise<OracleResponse> {
+    const queryId = `query_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const startTime = Date.now();
+
     try {
       await this.initialize();
 
@@ -169,6 +173,20 @@ export class OracleComputeService {
 
       console.log(`🎯 Processing query with ${selectedProviderName}`);
       console.log(`💬 Query: "${query}"`);
+
+      // Log compute operation start to HCS
+      try {
+        await logComputeOperation({
+          operationId: queryId,
+          operationType: 'ORACLE_QUERY',
+          provider: selectedProviderName,
+          startTime: new Date(startTime).toISOString(),
+          endTime: new Date().toISOString(),
+          status: 'started'
+        });
+      } catch (hcsError) {
+        console.log('⚠️ HCS logging failed (non-critical):', hcsError);
+      }
 
       // Get initial balance for cost calculation
       const initialLedger = await this.broker.ledger.getLedger();
@@ -248,6 +266,34 @@ export class OracleComputeService {
       const finalLedger = await this.broker.ledger.getLedger();
       const finalBalance = parseFloat(formatEther(finalLedger.ledgerInfo[0]));
       const cost = initialBalance - finalBalance;
+      const endTime = Date.now();
+      const executionTime = (endTime - startTime) / 1000; // in seconds
+
+      // Log successful oracle query to HCS
+      try {
+        await logOracleQuery({
+          queryId,
+          inputPrompt: query,
+          aiResponse: aiResponse || "No response received",
+          model: model,
+          provider: selectedProviderName,
+          cost: cost > 0 ? cost : 0,
+          executionTime,
+          success: true
+        });
+
+        await logComputeOperation({
+          operationId: queryId,
+          operationType: 'ORACLE_QUERY',
+          provider: selectedProviderName,
+          startTime: new Date(startTime).toISOString(),
+          endTime: new Date(endTime).toISOString(),
+          status: 'completed',
+          result: 'success'
+        });
+      } catch (hcsError) {
+        console.log('⚠️ HCS logging failed (non-critical):', hcsError);
+      }
 
       return {
         success: true,
@@ -260,6 +306,36 @@ export class OracleComputeService {
 
     } catch (error: any) {
       console.error("❌ Query processing failed:", error.message);
+      
+      const endTime = Date.now();
+      const executionTime = (endTime - startTime) / 1000; // in seconds
+
+      // Log failed oracle query to HCS
+      try {
+        await logOracleQuery({
+          queryId,
+          inputPrompt: query,
+          aiResponse: "",
+          model: config.provider || "llama-3.3-70b-instruct",
+          provider: config.provider || "llama-3.3-70b-instruct",
+          cost: 0,
+          executionTime,
+          success: false
+        });
+
+        await logComputeOperation({
+          operationId: queryId,
+          operationType: 'ORACLE_QUERY',
+          provider: config.provider || "unknown",
+          startTime: new Date(startTime).toISOString(),
+          endTime: new Date(endTime).toISOString(),
+          status: 'failed',
+          error: error.message
+        });
+      } catch (hcsError) {
+        console.log('⚠️ HCS logging failed (non-critical):', hcsError);
+      }
+
       return {
         success: false,
         error: error.message,
