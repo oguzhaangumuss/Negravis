@@ -65,6 +65,44 @@ app.get('/api/info', (req: Request, res: Response) => {
   });
 });
 
+// HCS Topics info route
+app.get('/api/hcs/topics', (req: Request, res: Response) => {
+  try {
+    const { hcsService } = require('./services/hcsService');
+    const topicIds = hcsService.getTopicIds();
+    res.json({
+      success: true,
+      hcsService: {
+        initialized: hcsService.isReady(),
+        topics: topicIds,
+        explorerLinks: {
+          oracleQueries: topicIds.oracleQueries ? `https://hashscan.io/testnet/topic/${topicIds.oracleQueries}` : null,
+          computeOperations: topicIds.computeOperations ? `https://hashscan.io/testnet/topic/${topicIds.computeOperations}` : null,
+          accountOperations: topicIds.accountOperations ? `https://hashscan.io/testnet/topic/${topicIds.accountOperations}` : null,
+          systemMetrics: topicIds.systemMetrics ? `https://hashscan.io/testnet/topic/${topicIds.systemMetrics}` : null
+        }
+      }
+    });
+  } catch (error: any) {
+    res.json({
+      success: false,
+      error: error.message,
+      topics: {
+        oracleQueries: '0.0.6503587',
+        computeOperations: '0.0.6503588',
+        accountOperations: '0.0.6503589',
+        systemMetrics: '0.0.6503590'
+      },
+      explorerLinks: {
+        oracleQueries: 'https://hashscan.io/testnet/topic/0.0.6503587',
+        computeOperations: 'https://hashscan.io/testnet/topic/0.0.6503588',
+        accountOperations: 'https://hashscan.io/testnet/topic/0.0.6503589',
+        systemMetrics: 'https://hashscan.io/testnet/topic/0.0.6503590'
+      }
+    });
+  }
+});
+
 // Simple error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Error:', err.message);
