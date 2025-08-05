@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import { brokerService } from '../services/brokerService';
 import { oracleService, queryOracle, getOracleModels as getAvailableOracleModels, getOracleAccountInfo } from '../oracle-compute-service';
 
+// Global fetch type declaration for Node.js 18+
+declare const fetch: typeof globalThis.fetch;
+
 /**
  * Helper function to convert BigInt values to strings in an object
  */
