@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
@@ -38,22 +38,22 @@ app.use(`${apiPrefix}/account`, accountRoutes);
 app.use(`${apiPrefix}/services`, serviceRoutes);
 
 // Root route - serve the landing page
-app.get('/', (req, res) => {
+app.get('/', (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Oracle interface route - serve the interactive Oracle page
-app.get('/oracle', (req, res) => {
+app.get('/oracle', (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../public/api.html'));
 });
 
 // Serve Oracle Hashscan interface
-app.get('/hashscan', (req, res) => {
+app.get('/hashscan', (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../public/hashscan.html'));
 });
 
 // API info route for programmatic access
-app.get('/api/info', (req, res) => {
+app.get('/api/info', (req: Request, res: Response) => {
   res.json({
     name: 'Negravis - 0G Compute Network API',
     version: '1.0.0',
