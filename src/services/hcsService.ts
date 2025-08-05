@@ -5,6 +5,7 @@ import {
   TopicMessageQuery,
   PrivateKey,
   AccountId,
+  AccountBalanceQuery,
   Hbar
 } from "@hashgraph/sdk";
 import dotenv from "dotenv";
@@ -64,8 +65,14 @@ export class HCSService {
       this.client.setOperator(accountId, privateKey);
 
       // Test connection
-      const balance = await this.client.getAccountBalance(accountId);
-      console.log(`✅ HCS connected - Account balance: ${balance.hbars.toString()}`);
+      try {
+        const accountInfo = await new AccountBalanceQuery()
+          .setAccountId(accountId)
+          .execute(this.client);
+        console.log(`✅ HCS connected - Account balance: ${accountInfo.hbars.toString()}`);
+      } catch (balanceError) {
+        console.log("⚠️ Could not check account balance (continuing anyway)");
+      }
 
       this.isInitialized = true;
       console.log("✅ Hedera Consensus Service initialized successfully");
