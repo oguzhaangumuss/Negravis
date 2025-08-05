@@ -37,3 +37,6 @@ temp/
 
 # Debug
 .debug/
+
+# Ide 
+.claude

@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, JsonRpcProvider, formatEther, parseEther } from "ethers";
 import { createZGComputeNetworkBroker, ZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
 import OpenAI from "openai";
 import dotenv from "dotenv";
@@ -29,7 +29,7 @@ class BrokerService {
         throw new Error('PRIVATE_KEY is required in .env file');
       }
       
-      const provider = new ethers.JsonRpcProvider("https://evmrpc-testnet.0g.ai");
+      const provider = new JsonRpcProvider("https://evmrpc-testnet.0g.ai");
       this.wallet = new ethers.Wallet(privateKey, provider);
       this.broker = await createZGComputeNetworkBroker(this.wallet);
       this.initialized = true;
@@ -125,8 +125,8 @@ class BrokerService {
       // Enhance services with additional metadata
       return services.map((service: any) => ({
         ...service,
-        inputPriceFormatted: ethers.formatEther(service.inputPrice || 0),
-        outputPriceFormatted: ethers.formatEther(service.outputPrice || 0),
+        inputPriceFormatted: formatEther(service.inputPrice || 0),
+        outputPriceFormatted: formatEther(service.outputPrice || 0),
         isOfficial: Object.values(OFFICIAL_PROVIDERS).includes(service.provider),
         isVerifiable: service.verifiability === 'TeeML',
         modelName: Object.entries(OFFICIAL_PROVIDERS).find(([_, addr]) => addr === service.provider)?.[0] || 'Unknown'
@@ -161,7 +161,7 @@ class BrokerService {
     await this.ensureInitialized();
     
     try {
-      await this.broker!.ledger.retrieveFund("inference", Number(ethers.parseEther(amount.toString())));
+      await this.broker!.ledger.retrieveFund("inference", Number(parseEther(amount.toString())));
       return `Refund of ${amount} ETH requested successfully`;
     } catch (error: any) {
       throw new Error(`Failed to request refund: ${error.message}`);

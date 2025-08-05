@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, JsonRpcProvider, formatEther, parseEther } from "ethers";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
 import OpenAI from "openai";
 import dotenv from "dotenv";
@@ -43,7 +43,7 @@ export interface OracleConfig {
 export class OracleComputeService {
   private wallet: ethers.Wallet | null = null;
   private broker: any = null;
-  private provider: ethers.JsonRpcProvider | null = null;
+  private provider: JsonRpcProvider | null = null;
   private connectedEndpoint: string | null = null;
   private isInitialized = false;
 
@@ -73,7 +73,7 @@ export class OracleComputeService {
       for (const endpoint of RPC_ENDPOINTS) {
         try {
           console.log(`🔍 Testing: ${endpoint}`);
-          const testProvider = new ethers.JsonRpcProvider(endpoint);
+          const testProvider = new JsonRpcProvider(endpoint);
           
           // Test connection with a simple call
           await testProvider.getNetwork();
@@ -141,7 +141,7 @@ export class OracleComputeService {
         return {
           name: modelName,
           provider: providerAddress,
-          description: service ? `Input: ${ethers.formatEther(service.inputPrice || 0)} OG, Output: ${ethers.formatEther(service.outputPrice || 0)} OG` : 'Pricing unavailable'
+          description: service ? `Input: ${formatEther(service.inputPrice || 0)} OG, Output: ${formatEther(service.outputPrice || 0)} OG` : 'Pricing unavailable'
         };
       });
     } catch (error: any) {
@@ -172,7 +172,7 @@ export class OracleComputeService {
 
       // Get initial balance for cost calculation
       const initialLedger = await this.broker.ledger.getLedger();
-      const initialBalance = parseFloat(ethers.formatEther(initialLedger.ledgerInfo[0]));
+      const initialBalance = parseFloat(formatEther(initialLedger.ledgerInfo[0]));
 
       // Acknowledge provider (only needed first time)
       try {
@@ -246,7 +246,7 @@ export class OracleComputeService {
 
       // Calculate cost
       const finalLedger = await this.broker.ledger.getLedger();
-      const finalBalance = parseFloat(ethers.formatEther(finalLedger.ledgerInfo[0]));
+      const finalBalance = parseFloat(formatEther(finalLedger.ledgerInfo[0]));
       const cost = initialBalance - finalBalance;
 
       return {
@@ -286,11 +286,11 @@ export class OracleComputeService {
 
       const ethBalance = await this.provider.getBalance(this.wallet.address);
       const ledgerInfo = await this.broker.ledger.getLedger();
-      const ledgerBalance = ethers.formatEther(ledgerInfo.ledgerInfo[0]);
+      const ledgerBalance = formatEther(ledgerInfo.ledgerInfo[0]);
 
       return {
         walletAddress: this.wallet.address,
-        ethBalance: ethers.formatEther(ethBalance),
+        ethBalance: formatEther(ethBalance),
         ledgerBalance: ledgerBalance,
         connectedRPC: this.connectedEndpoint || 'Unknown'
       };
