@@ -12,6 +12,7 @@ import serviceRoutes from './routes/serviceRoutes';
 import contractRoutes from './routes/contractRoutes';
 import oracleRoutes from './routes/oracleRoutes';
 import hfsRoutes from './routes/hfsRoutes';
+import analyticsRoutes from './routes/analyticsRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -42,6 +43,7 @@ app.use(`${apiPrefix}/services`, serviceRoutes);
 app.use(`${apiPrefix}/contracts`, contractRoutes);
 app.use(`${apiPrefix}/oracles`, oracleRoutes);
 app.use(`${apiPrefix}/hfs`, hfsRoutes);
+app.use(`${apiPrefix}/analytics`, analyticsRoutes);
 
 // Root route - serve the landing page
 app.get('/', (req: Request, res: Response) => {
@@ -58,6 +60,11 @@ app.get('/hashscan', (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../public/hashscan.html'));
 });
 
+// Serve Hedera Analytics Dashboard
+app.get('/analytics', (req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, '../public/analytics.html'));
+});
+
 // API info route for programmatic access
 app.get('/api/info', (req: Request, res: Response) => {
   res.json({
@@ -70,6 +77,7 @@ app.get('/api/info', (req: Request, res: Response) => {
       contracts: `${apiPrefix}/contracts`,
       oracles: `${apiPrefix}/oracles`,
       hfs: `${apiPrefix}/hfs`,
+      analytics: `${apiPrefix}/analytics`,
     }
   });
 });
