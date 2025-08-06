@@ -1,4 +1,5 @@
 import { brokerService } from './services/brokerService';
+import { oracleContractService } from './services/blockchain/oracleContractService';
 
 /**
  * Initialize the application and ensure prerequisite resources exist
@@ -17,6 +18,16 @@ export const initializeApplication = async (): Promise<void> => {
       const initialAmount = 0.01; 
       await brokerService.addFundsToLedger(initialAmount);
       console.log(`✅ Ledger account created with ${initialAmount} initial funds`);
+    }
+    
+    // Initialize Smart Contract Services
+    try {
+      console.log('🔧 Initializing Smart Contract Services...');
+      await oracleContractService.initialize();
+      console.log('✅ Smart Contract Services initialized successfully');
+    } catch (contractError: any) {
+      console.log('⚠️ Smart Contract initialization failed (non-critical):', contractError.message);
+      console.log('📍 Contract Error stack:', contractError.stack);
     }
     
     console.log('✅ Application initialization complete');

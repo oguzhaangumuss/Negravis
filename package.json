@@ -14,6 +14,7 @@
   "dependencies": {
     "@0glabs/0g-serving-broker": "^0.2.12",
     "@hashgraph/sdk": "^2.67.0",
+    "@openzeppelin/contracts": "^5.4.0",
     "@types/crypto-js": "^4.2.2",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
@@ -24,6 +25,7 @@
     "helmet": "^7.1.0",
     "js-yaml": "^4.1.0",
     "openai": "^4.28.0",
+    "solc": "^0.8.30",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0"
   },
