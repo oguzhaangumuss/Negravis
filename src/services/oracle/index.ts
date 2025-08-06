@@ -16,6 +16,11 @@ export { CoinGeckoOracleAdapter } from './adapters/CoinGeckoOracleAdapter';
 export { WeatherOracleAdapter } from './adapters/WeatherOracleAdapter';
 export { WebScrapingAdapter } from './adapters/WebScrapingAdapter';
 
+// Chatbot integration
+export { ChatbotManager } from './chatbot/ChatbotManager';
+export { DiscordOracleBot } from './chatbot/DiscordOracleBot';
+export { ChatbotBase } from './chatbot/ChatbotBase';
+
 // Types and interfaces
 export * from '../../types/oracle';
 
