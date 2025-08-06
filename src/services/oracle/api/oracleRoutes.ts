@@ -37,8 +37,8 @@ export function createOracleRoutes(
   // Middleware for rate limiting (basic implementation)
   const rateLimit = (req: any, res: any, next: any) => {
     // Simple in-memory rate limiting
-    if (!global.rateLimitMap) {
-      global.rateLimitMap = new Map();
+    if (!(global as any).rateLimitMap) {
+      (global as any).rateLimitMap = new Map();
     }
 
     const clientIP = req.ip || req.connection.remoteAddress;
@@ -46,7 +46,7 @@ export function createOracleRoutes(
     const windowMs = 60 * 1000; // 1 minute
     const maxRequests = 60; // 60 requests per minute
 
-    const clientData = global.rateLimitMap.get(clientIP) || { count: 0, resetTime: now + windowMs };
+    const clientData = (global as any).rateLimitMap.get(clientIP) || { count: 0, resetTime: now + windowMs };
 
     if (now > clientData.resetTime) {
       clientData.count = 0;
@@ -62,7 +62,7 @@ export function createOracleRoutes(
     }
 
     clientData.count++;
-    global.rateLimitMap.set(clientIP, clientData);
+    (global as any).rateLimitMap.set(clientIP, clientData);
     next();
   };
 

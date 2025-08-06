@@ -98,7 +98,7 @@ export class CustomAPIAdapter extends OracleProviderBase {
         path: '/simple/price',
         params: { vs_currencies: 'usd' },
         transformer: (data, query) => {
-          const symbol = this.extractSymbol(query).toLowerCase();
+          const symbol = this.extractSymbol(query || '').toLowerCase();
           return data[symbol] || data[Object.keys(data)[0]];
         },
         healthCheck: '/ping'

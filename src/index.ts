@@ -41,9 +41,21 @@ const apiPrefix = '/api';
 app.use(`${apiPrefix}/account`, accountRoutes);
 app.use(`${apiPrefix}/services`, serviceRoutes);
 app.use(`${apiPrefix}/contracts`, contractRoutes);
-app.use(`${apiPrefix}/oracles`, oracleRoutes);
+app.use(`${apiPrefix}/oracles`, oracleRoutes); // Legacy oracle routes
 app.use(`${apiPrefix}/hfs`, hfsRoutes);
 app.use(`${apiPrefix}/analytics`, analyticsRoutes);
+
+// New Oracle System API Routes (Issue #11)
+import { createOracleRoutes } from './services/oracle/api/oracleRoutes';
+import { oracleManager } from './services/oracleManager';
+
+// Get OracleRouter from OracleManager for the new API
+const getOracleRouter = () => {
+  return (oracleManager as any).oracleRouter;
+};
+
+const newOracleRoutes = createOracleRoutes(getOracleRouter());
+app.use(`${apiPrefix}/oracle`, newOracleRoutes); // New oracle system routes
 
 // Root route - serve the landing page
 app.get('/', (req: Request, res: Response) => {

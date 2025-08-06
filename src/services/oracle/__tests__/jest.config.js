@@ -21,13 +21,9 @@ module.exports = {
   // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
 
-  // Transform files
-  transform: {
-    '^.+\\.ts$': 'ts-jest'
-  },
 
   // Module name mapping for absolute imports
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@types/(.*)$': '<rootDir>/types/$1'
   },
@@ -69,9 +65,9 @@ module.exports = {
   // Reset modules between tests
   resetModules: true,
 
-  // Global test environment variables
-  globals: {
-    'ts-jest': {
+  // Transform configuration for ts-jest
+  transform: {
+    '^.+\\.ts$': ['ts-jest', {
       tsconfig: {
         compilerOptions: {
           module: 'commonjs',
@@ -84,7 +80,7 @@ module.exports = {
           resolveJsonModule: true
         }
       }
-    }
+    }]
   },
 
   // Ignore patterns

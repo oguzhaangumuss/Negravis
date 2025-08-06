@@ -83,7 +83,7 @@ export class CoinGeckoOracleAdapter extends OracleProviderBase {
         source: 'coingecko'
       };
 
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof OracleError) {
         throw error;
       }

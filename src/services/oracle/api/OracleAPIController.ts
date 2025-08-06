@@ -70,7 +70,7 @@ export class OracleAPIController {
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Oracle query API error:', error.message);
       res.status(500).json({
         success: false,
@@ -122,7 +122,7 @@ export class OracleAPIController {
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Price API error:', error.message);
       res.status(500).json({
         success: false,
@@ -172,7 +172,7 @@ export class OracleAPIController {
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Weather API error:', error.message);
       res.status(500).json({
         success: false,
@@ -220,7 +220,7 @@ export class OracleAPIController {
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Providers API error:', error.message);
       res.status(500).json({
         success: false,
@@ -260,7 +260,7 @@ export class OracleAPIController {
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Status API error:', error.message);
       res.status(500).json({
         success: false,
@@ -298,7 +298,7 @@ export class OracleAPIController {
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Health check API error:', error.message);
       res.status(500).json({
         success: false,
@@ -342,7 +342,7 @@ export class OracleAPIController {
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Chatbot message API error:', error.message);
       res.status(500).json({
         success: false,
@@ -384,7 +384,7 @@ export class OracleAPIController {
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Broadcast API error:', error.message);
       res.status(500).json({
         success: false,
@@ -413,7 +413,7 @@ export class OracleAPIController {
         data: stats
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Chatbot stats API error:', error.message);
       res.status(500).json({
         success: false,
@@ -488,7 +488,7 @@ export class OracleAPIController {
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Batch query API error:', error.message);
       res.status(500).json({
         success: false,

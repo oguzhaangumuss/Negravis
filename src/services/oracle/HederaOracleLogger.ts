@@ -13,7 +13,7 @@ import { ConsensusResult, HCSLogEntry, OracleQuery } from '../../types/oracle';
  * Provides immutable logging of oracle queries and results to HCS
  */
 export class HederaOracleLogger {
-  private client: Client;
+  private client!: Client;
   private topicId: TopicId | null = null;
   private isInitialized = false;
   private batchSize: number = 10;
@@ -73,7 +73,7 @@ export class HederaOracleLogger {
       console.log(`HCS Topic created: ${this.topicId.toString()}`);
       return this.topicId.toString();
 
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to create HCS topic: ${error.message}`);
     }
   }
@@ -113,7 +113,7 @@ export class HederaOracleLogger {
       // For batch logging
       return this.addToBatch(logEntry);
 
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to log oracle result to HCS: ${error.message}`);
     }
   }
@@ -212,7 +212,7 @@ export class HederaOracleLogger {
 
       console.log(`Batch of ${batchToSubmit.length} oracle results logged to HCS`);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to submit oracle log batch:', error.message);
       // Re-add failed entries to batch for retry
       this.batch.unshift(...batchToSubmit);
@@ -288,7 +288,7 @@ export class HederaOracleLogger {
       await transaction.execute(this.client);
       console.log(`Health status logged for ${providerName}: ${isHealthy}`);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Failed to log health status for ${providerName}:`, error.message);
     }
   }

@@ -49,7 +49,7 @@ export class DiscordOracleBot extends ChatbotBase {
       
       this.isActive = true;
       console.log('✅ Discord Oracle Bot initialized successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Discord bot initialization failed:', error.message);
       throw error;
     }
@@ -64,9 +64,11 @@ export class DiscordOracleBot extends ChatbotBase {
 
       // Create embed for rich response
       const embed = this.createResponseEmbed(response);
-      await channel.send({ embeds: [embed] });
+      if ('send' in channel) {
+        await channel.send({ embeds: [embed] });
+      }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(`❌ Failed to send message to channel ${channelId}:`, error.message);
       throw error;
     }
@@ -166,7 +168,7 @@ export class DiscordOracleBot extends ChatbotBase {
         { body: commands.map(cmd => cmd.toJSON()) }
       );
       console.log('✅ Discord slash commands registered successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Failed to register slash commands:', error);
       throw error;
     }
@@ -189,7 +191,7 @@ export class DiscordOracleBot extends ChatbotBase {
 
       await interaction.editReply({ embeds: [embed] });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Slash command error:', error.message);
       await interaction.editReply({
         content: `An error occurred: ${error.message}`
@@ -214,7 +216,7 @@ export class DiscordOracleBot extends ChatbotBase {
 
       await message.reply({ embeds: [embed] });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Text command error:', error.message);
       await message.reply(`An error occurred: ${error.message}`);
     }
@@ -257,7 +259,7 @@ export class DiscordOracleBot extends ChatbotBase {
     };
 
     const responseType = response.metadata?.type || 'general';
-    embed.setColor(colors[responseType] || 0x666666);
+    embed.setColor((colors as any)[responseType] || 0x666666);
 
     // Set title based on type
     const titles = {
@@ -270,7 +272,7 @@ export class DiscordOracleBot extends ChatbotBase {
       error: '❌ Error'
     };
 
-    embed.setTitle(titles[responseType] || '🔍 Oracle Query Result');
+    embed.setTitle((titles as any)[responseType] || '🔍 Oracle Query Result');
 
     // Format description
     if (response.text.length > 4000) {
@@ -314,10 +316,10 @@ export class DiscordOracleBot extends ChatbotBase {
     for (const channelId of this.allowedChannels) {
       try {
         const channel = await this.client.channels.fetch(channelId);
-        if (channel && channel.isTextBased()) {
+        if (channel && channel.isTextBased() && 'send' in channel) {
           await channel.send({ embeds: [embed] });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.warn(`Failed to send announcement to channel ${channelId}:`, error.message);
       }
     }

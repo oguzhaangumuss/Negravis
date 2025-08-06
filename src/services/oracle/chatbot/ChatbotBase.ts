@@ -37,7 +37,7 @@ export abstract class ChatbotBase {
       // Process as natural language query
       return await this.handleNaturalLanguageQuery(query);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Chatbot query processing failed:', error.message);
       return {
         text: `Sorry, I encountered an error while processing your query: ${error.message}`,
@@ -84,7 +84,7 @@ export abstract class ChatbotBase {
       // Format response based on query type
       return this.formatOracleResponse(result, intent, entities);
 
-    } catch (error) {
+    } catch (error: any) {
       return {
         text: `I couldn't find reliable data for your query. Please try rephrasing or use a specific command like \`/price BTC\` or \`/weather London\`.`,
         metadata: { 

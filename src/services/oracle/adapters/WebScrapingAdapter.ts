@@ -53,7 +53,7 @@ export class WebScrapingAdapter extends OracleProviderBase {
         query: query
       };
 
-    } catch (error) {
+    } catch (error: any) {
       throw new OracleError(
         `Web scraping failed for ${query}: ${error.message}`,
         'SCRAPING_ERROR',
@@ -79,7 +79,7 @@ export class WebScrapingAdapter extends OracleProviderBase {
       selector: '.headline-list .card-title',
       extractor: ($, selector) => {
         const headlines: string[] = [];
-        $(selector).each((i, el) => {
+        $(selector).each((i: any, el: any) => {
           if (i < 5) headlines.push($(el).text().trim());
         });
         return {
@@ -97,7 +97,7 @@ export class WebScrapingAdapter extends OracleProviderBase {
       selector: '.global-stats .value',
       extractor: ($, selector) => {
         const stats: Record<string, string> = {};
-        $(selector).each((i, el) => {
+        $(selector).each((i: any, el: any) => {
           const value = $(el).text().trim();
           if (i === 0) stats.market_cap = value;
           if (i === 1) stats.volume_24h = value;
@@ -134,14 +134,14 @@ export class WebScrapingAdapter extends OracleProviderBase {
     return undefined;
   }
 
-  private extractData($: cheerio.CheerioAPI, rule: ScrapingRule, query: string): any {
+  private extractData($: any, rule: ScrapingRule, query: string): any {
     if (rule.extractor) {
       return rule.extractor($, rule.selector, query);
     }
 
     // Default extraction - get text content
     const elements: string[] = [];
-    $(rule.selector).each((i, el) => {
+    $(rule.selector).each((i: any, el: any) => {
       elements.push($(el).text().trim());
     });
 
@@ -165,7 +165,7 @@ export class WebScrapingAdapter extends OracleProviderBase {
         count: searchResults.length
       };
 
-    } catch (error) {
+    } catch (error: any) {
       throw new OracleError(
         `Google search failed for ${query}: ${error.message}`,
         'SEARCH_ERROR',

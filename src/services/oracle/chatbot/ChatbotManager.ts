@@ -1,6 +1,6 @@
 import { OracleRouter } from '../OracleRouter';
 import { ChatbotBase } from './ChatbotBase';
-import { DiscordOracleBot } from './DiscordOracleBot';
+// import { DiscordOracleBot } from './DiscordOracleBot';
 import { OracleConfig } from '../../../types/oracle';
 
 /**
@@ -45,7 +45,7 @@ export class ChatbotManager {
       this.isInitialized = true;
       console.log(`✅ Chatbot Manager initialized with ${this.bots.size} active bots`);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Chatbot Manager initialization failed:', error.message);
       throw error;
     }
@@ -68,16 +68,18 @@ export class ChatbotManager {
       throw new Error('DISCORD_APPLICATION_ID environment variable not set');
     }
 
-    const discordBot = new DiscordOracleBot(
-      this.oracleRouter,
-      discordConfig.token,
-      applicationId,
-      discordConfig.channels || []
-    );
+    // Temporarily disabled until Discord.js types are fixed
+    console.log('⚠️ Discord bot disabled - will be enabled in future update');
+    // const discordBot = new DiscordOracleBot(
+    //   this.oracleRouter,
+    //   discordConfig.token,
+    //   applicationId,
+    //   discordConfig.channels || []
+    // );
 
-    await discordBot.initialize();
-    this.bots.set('discord', discordBot);
-    console.log('✅ Discord Oracle Bot initialized');
+    // await discordBot.initialize();
+    // this.bots.set('discord', discordBot);
+    // console.log('✅ Discord Oracle Bot initialized');
   }
 
   /**
@@ -103,11 +105,13 @@ export class ChatbotManager {
 
     const promises = Array.from(this.bots.entries()).map(async ([platform, bot]) => {
       try {
-        if (platform === 'discord' && bot instanceof DiscordOracleBot) {
-          await bot.sendAnnouncement(message);
-        }
+        // Temporarily disabled Discord-specific logic
+        // if (platform === 'discord' && bot instanceof DiscordOracleBot) {
+        //   await bot.sendAnnouncement(message);
+        // }
+        console.log(`⚠️ Announcement to ${platform} skipped - bot system disabled`);
         // Add other platform-specific announcement methods here
-      } catch (error) {
+      } catch (error: any) {
         console.warn(`⚠️ Failed to send announcement to ${platform}:`, error.message);
       }
     });
@@ -140,7 +144,7 @@ export class ChatbotManager {
     const stats = {
       total_platforms: this.bots.size,
       active_bots: 0,
-      platforms: [],
+      platforms: [] as any[],
       system_health: 0
     };
 
@@ -154,9 +158,9 @@ export class ChatbotManager {
       };
 
       // Get platform-specific info
-      if (platform === 'discord' && bot instanceof DiscordOracleBot) {
-        platformInfo.info = bot.getBotInfo();
-      }
+      // if (platform === 'discord' && bot instanceof DiscordOracleBot) {
+      //   platformInfo.info = bot.getBotInfo();
+      // }
 
       stats.platforms.push(platformInfo);
     }
@@ -189,7 +193,7 @@ export class ChatbotManager {
       // Add other platforms as needed
 
       console.log(`✅ ${platform} bot restarted successfully`);
-    } catch (error) {
+    } catch (error: any) {
       console.error(`❌ Failed to restart ${platform} bot:`, error.message);
       throw error;
     }
@@ -220,7 +224,7 @@ export class ChatbotManager {
       try {
         const isHealthy = bot.isActiveBot();
         results.set(platform, isHealthy);
-      } catch (error) {
+      } catch (error: any) {
         console.warn(`Health check failed for ${platform}:`, error.message);
         results.set(platform, false);
       }

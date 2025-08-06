@@ -200,7 +200,7 @@ export async function advancedNLPExample() {
         console.log(`✅ Result: ${JSON.stringify(result.value, null, 2)}`);
         console.log(`📊 Confidence: ${(result.confidence * 100).toFixed(1)}%`);
         console.log(`📡 Sources: ${result.sources.join(', ')}`);
-      } catch (error) {
+      } catch (error: any) {
         console.log(`❌ Error: ${error.message}`);
       }
     }

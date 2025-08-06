@@ -102,7 +102,7 @@ async function main() {
     header(category.name);
     log(category.description, 'blue');
 
-    const jestCommand = `npx jest --config=${path.join(testDir, 'jest.config.js')} --testPathPattern="${category.pattern}" --verbose`;
+    const jestCommand = `npx jest --config=${path.join(testDir, 'jest.config.js')} --testPathPatterns="${category.pattern}" --verbose`;
     
     const result = runCommand(jestCommand, `Running ${category.name}`);
     
@@ -161,7 +161,7 @@ async function main() {
   if (allTestsPassed) {
     header('Performance Benchmarks');
     
-    const benchmarkCommand = `npx jest --config=${path.join(testDir, 'jest.config.js')} --testNamePattern="Performance|performance" --verbose`;
+    const benchmarkCommand = `npx jest --config=${path.join(testDir, 'jest.config.js')} --testNamePatterns="Performance|performance" --verbose`;
     
     runCommand(benchmarkCommand, 'Running performance benchmarks');
   }
@@ -234,14 +234,14 @@ Examples:
 // Run with specific options
 if (args.includes('--unit')) {
   log('Running unit tests only...', 'blue');
-  const command = `npx jest --config=${path.join(testDir, 'jest.config.js')} --testPathPattern="adapters|OracleConsensusService|api" --verbose`;
+  const command = `npx jest --config=${path.join(testDir, 'jest.config.js')} --testPathPatterns="adapters|OracleConsensusService|api" --verbose`;
   execSync(command, { cwd: rootDir, stdio: 'inherit' });
   process.exit(0);
 }
 
 if (args.includes('--integration')) {
   log('Running integration tests only...', 'blue');
-  const command = `npx jest --config=${path.join(testDir, 'jest.config.js')} --testPathPattern="integration" --verbose`;
+  const command = `npx jest --config=${path.join(testDir, 'jest.config.js')} --testPathPatterns="integration" --verbose`;
   execSync(command, { cwd: rootDir, stdio: 'inherit' });
   process.exit(0);
 }

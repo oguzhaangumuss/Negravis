@@ -281,8 +281,8 @@ export async function setupTestEnvironment(): Promise<{
  */
 export async function cleanupTestEnvironment(): Promise<void> {
   // Reset any global state
-  if (global.rateLimitMap) {
-    global.rateLimitMap.clear();
+  if ((global as any).rateLimitMap) {
+    (global as any).rateLimitMap.clear();
   }
   
   // Clear any timers

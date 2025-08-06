@@ -60,7 +60,7 @@ export class OracleRouter {
       console.log('✅ Oracle Router initialized successfully');
       console.log(`📊 Registered ${this.providers.size} oracle providers`);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Oracle Router initialization failed:', error.message);
       throw error;
     }
@@ -96,7 +96,7 @@ export class OracleRouter {
       if (this.hederaLogger) {
         try {
           await this.hederaLogger.logOracleResult(query, result);
-        } catch (logError) {
+        } catch (logError: any) {
           console.warn('⚠️ Failed to log to Hedera:', logError.message);
         }
       }
@@ -104,7 +104,7 @@ export class OracleRouter {
       console.log(`✅ Oracle query completed: ${result.sources.length} sources, confidence: ${(result.confidence * 100).toFixed(1)}%`);
       return result;
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(`❌ Oracle query failed: ${error.message}`);
       throw error;
     }
@@ -198,7 +198,7 @@ export class OracleRouter {
             isHealthy,
             provider ? await provider.getMetrics() : undefined
           );
-        } catch (error) {
+        } catch (error: any) {
           console.warn(`⚠️ Failed to log health status for ${providerName}:`, error.message);
         }
       }
@@ -217,7 +217,7 @@ export class OracleRouter {
     const stats = {
       total_providers: providers.length,
       active_providers: Array.from(healthStatus.values()).filter(h => h).length,
-      provider_details: [],
+      provider_details: [] as any[],
       system_health: 0,
       last_check: new Date()
     };
@@ -289,7 +289,7 @@ export class OracleRouter {
       }
 
       console.log('🔗 Hedera Oracle Logger initialized');
-    } catch (error) {
+    } catch (error: any) {
       console.warn('⚠️ Failed to initialize Hedera logging:', error.message);
     }
   }

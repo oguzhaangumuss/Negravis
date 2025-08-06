@@ -35,7 +35,8 @@ export type { ConsensusConfig } from './OracleConsensusService';
 /**
  * Create and initialize Oracle Router with default configuration
  */
-export async function createOracleRouter(config?: any): Promise<OracleRouter> {
+export async function createOracleRouter(config?: any): Promise<any> {
+  const { OracleRouter } = await import('./OracleRouter');
   const router = new OracleRouter(config);
   await router.initialize();
   return router;

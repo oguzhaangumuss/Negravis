@@ -361,7 +361,7 @@ describe('Oracle System Integration Tests', () => {
         await oracleRouter.query('BTC price');
         fail('Should need minimum responses');
       } catch (error) {
-        expect(error.message).toContain('Insufficient valid responses');
+        expect((error as any).message).toContain('Insufficient valid responses');
       }
 
       // Restore second provider

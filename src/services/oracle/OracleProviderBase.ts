@@ -69,7 +69,7 @@ export abstract class OracleProviderBase implements OracleProvider {
 
       return response;
 
-    } catch (error) {
+    } catch (error: any) {
       this.updateMetrics(false, Date.now() - startTime);
       throw new OracleError(
         `Oracle ${this.name} fetch failed: ${error.message}`,
@@ -91,7 +91,7 @@ export abstract class OracleProviderBase implements OracleProvider {
       );
       this.metrics.lastHealthCheck = new Date();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.warn(`Health check failed for ${this.name}:`, error.message);
       return false;
     }
@@ -161,7 +161,9 @@ export abstract class OracleProviderBase implements OracleProvider {
     // Cleanup old cache entries (simple LRU)
     if (this.cache.size > 100) {
       const oldestKey = this.cache.keys().next().value;
-      this.cache.delete(oldestKey);
+      if (oldestKey) {
+        this.cache.delete(oldestKey);
+      }
     }
   }
 

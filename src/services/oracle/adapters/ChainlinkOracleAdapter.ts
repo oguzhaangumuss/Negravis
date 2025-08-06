@@ -52,7 +52,7 @@ export class ChainlinkOracleAdapter extends OracleProviderBase {
         pair: normalizedQuery
       };
 
-    } catch (error) {
+    } catch (error: any) {
       throw new OracleError(
         `Chainlink fetch failed for ${query}: ${error.message}`,
         'CHAINLINK_ERROR',

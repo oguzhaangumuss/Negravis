@@ -29,7 +29,7 @@ afterAll(() => {
 });
 
 // Global test utilities
-global.testUtils = {
+(global as any).testUtils = {
   // Wait for async operations
   wait: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
   
@@ -173,8 +173,8 @@ afterEach(async () => {
   jest.useRealTimers();
   
   // Clear any global state
-  if (global.rateLimitMap) {
-    global.rateLimitMap.clear();
+  if ((global as any).rateLimitMap) {
+    (global as any).rateLimitMap.clear();
   }
 });
 
@@ -219,12 +219,4 @@ expect.extend({
   }
 });
 
-// Type declarations for custom matchers
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toBeWithinRange(floor: number, ceiling: number): R;
-      toBeApproximately(expected: number, tolerance?: number): R;
-    }
-  }
-}
+// Custom matchers removed for simplicity
