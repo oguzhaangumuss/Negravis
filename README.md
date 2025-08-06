@@ -176,9 +176,24 @@ cp .env.example .env  # if available, or create manually
 Add your configuration to `.env`:
 ```env
 PRIVATE_KEY=your_private_key_here_without_0x_prefix
-PORT=4000
+PORT=4001
 NODE_ENV=development
+
+# Hedera Network Configuration
+HEDERA_ACCOUNT_ID=your_hedera_account_id
+HEDERA_PRIVATE_KEY=your_hedera_private_key
+
+# Web Search API Keys (Optional - enables enhanced web search)
+BRAVE_SEARCH_API_KEY=your_brave_search_api_key
 ```
+
+**Get Brave Search API Key (Free):**
+1. Visit [Brave Search API](https://brave.com/search/api/)
+2. Sign up for a free account
+3. Get your API key (2,000 free requests/month)
+4. Add it to your `.env` file
+
+> 💡 **Note**: If no Brave Search API key is provided, the system will fallback to Puppeteer web scraping.
 
 4. **Build the project:**
 ```bash

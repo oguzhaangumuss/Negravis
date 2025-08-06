@@ -36,6 +36,7 @@
     "js-yaml": "^4.1.0",
     "multer": "^2.0.2",
     "openai": "^4.28.0",
+    "puppeteer": "^24.16.0",
     "solc": "^0.8.30",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0"

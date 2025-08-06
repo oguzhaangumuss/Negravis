@@ -155,31 +155,33 @@ export class CoinGeckoOracleAdapter extends OracleProviderBase {
     
     // Multiple regex patterns for better symbol extraction
     const patterns = [
-      /\b(BTC|BITCOIN)\b/,
-      /\b(ETH|ETHEREUM)\b/,
-      /\b(BNB|BINANCE)\b/,
-      /\b(ADA|CARDANO)\b/,
-      /\b(DOT|POLKADOT)\b/,
-      /\b(SOL|SOLANA)\b/,
-      /\b(MATIC|POLYGON)\b/,
-      /\b(AVAX|AVALANCHE)\b/,
-      /\b(ATOM|COSMOS)\b/,
-      /\b(LINK|CHAINLINK)\b/,
-      /\b(XRP|RIPPLE)\b/,
-      /\b(DOGE|DOGECOIN)\b/,
-      /\b(LTC|LITECOIN)\b/,
-      /\b(UNI|UNISWAP)\b/,
+      /\b(BTC|BITCOIN)\b/i,
+      /\b(ETH|ETHEREUM)\b/i,
+      /\b(BNB|BINANCE|BINANCECOIN)\b/i,
+      /\b(ADA|CARDANO)\b/i,
+      /\b(DOT|POLKADOT)\b/i,
+      /\b(SOL|SOLANA)\b/i,
+      /\b(MATIC|POLYGON)\b/i,
+      /\b(AVAX|AVALANCHE)\b/i,
+      /\b(ATOM|COSMOS)\b/i,
+      /\b(LINK|CHAINLINK)\b/i,
+      /\b(XRP|RIPPLE)\b/i,
+      /\b(DOGE|DOGECOIN)\b/i,
+      /\b(LTC|LITECOIN)\b/i,
+      /\b(UNI|UNISWAP)\b/i,
+      /\b(HBAR|HEDERA)\b/i,
     ];
     
     // Check each pattern
     for (const pattern of patterns) {
-      const match = upperQuery.match(pattern);
+      const match = query.match(pattern);
       if (match) {
-        const token = match[1];
+        const token = match[1].toUpperCase();
+        console.log(`✅ Pattern matched: "${token}"`);
         // Return the symbol (first 3-4 chars typically)
         if (['BTC', 'BITCOIN'].includes(token)) return 'BTC';
         if (['ETH', 'ETHEREUM'].includes(token)) return 'ETH';
-        if (['BNB', 'BINANCE'].includes(token)) return 'BNB';
+        if (['BNB', 'BINANCE', 'BINANCECOIN'].includes(token)) return 'BNB';
         if (['ADA', 'CARDANO'].includes(token)) return 'ADA';
         if (['DOT', 'POLKADOT'].includes(token)) return 'DOT';
         if (['SOL', 'SOLANA'].includes(token)) return 'SOL';
@@ -191,6 +193,7 @@ export class CoinGeckoOracleAdapter extends OracleProviderBase {
         if (['DOGE', 'DOGECOIN'].includes(token)) return 'DOGE';
         if (['LTC', 'LITECOIN'].includes(token)) return 'LTC';
         if (['UNI', 'UNISWAP'].includes(token)) return 'UNI';
+        if (['HBAR', 'HEDERA'].includes(token)) return 'HBAR';
       }
     }
 

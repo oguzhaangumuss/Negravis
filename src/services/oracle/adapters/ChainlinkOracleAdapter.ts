@@ -70,12 +70,29 @@ export class ChainlinkOracleAdapter extends OracleProviderBase {
   private normalizeQuery(query: string): string {
     // Convert various query formats to standardized pair format
     const cleanQuery = query.toUpperCase().replace(/\s+/g, '');
+    console.log(`🔗 Chainlink normalizeQuery: "${query}" → "${cleanQuery}"`);
     
+    // Symbol mapping for better compatibility
+    const symbolMap: Record<string, string> = {
+      'BITCOIN': 'BTC',
+      'ETHEREUM': 'ETH',
+      'BINANCE': 'BNB',
+      'BINANCECOIN': 'BNB',
+      'CARDANO': 'ADA',
+      'SOLANA': 'SOL',
+      'POLYGON': 'MATIC',
+      'CHAINLINK': 'LINK',
+      'AVALANCHE': 'AVAX',
+      'POLKADOT': 'DOT'
+    };
+
     // Handle different input formats
     if (cleanQuery.includes('PRICE')) {
-      const match = cleanQuery.match(/(\w+).*PRICE/);
+      const match = cleanQuery.match(/([\w]+).*PRICE/);
       if (match) {
-        return `${match[1]}/USD`;
+        const symbol = symbolMap[match[1]] || match[1];
+        console.log(`🎯 Chainlink extracted symbol: "${match[1]}" → "${symbol}"`);
+        return `${symbol}/USD`;
       }
     }
 
@@ -84,8 +101,10 @@ export class ChainlinkOracleAdapter extends OracleProviderBase {
       return cleanQuery;
     }
 
-    // Single asset - default to USD
-    return `${cleanQuery}/USD`;
+    // Single asset - default to USD with symbol mapping
+    const mappedSymbol = symbolMap[cleanQuery] || cleanQuery;
+    console.log(`🎯 Chainlink mapped symbol: "${cleanQuery}" → "${mappedSymbol}"`);
+    return `${mappedSymbol}/USD`;
   }
 
   private async callChainlinkAggregator(contractAddress: string): Promise<any> {

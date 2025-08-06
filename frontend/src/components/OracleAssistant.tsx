@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Merriweather } from 'next/font/google'
-import { Send, Bot, User, Zap, BarChart3, Cloud, Coins, Cpu, Activity, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
+import { Send, Bot, User, Zap, BarChart3, Cloud, Coins, Activity, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
 import { oracleApi } from '../services/oracleApi'
 import { useOracleApi } from '../hooks/useOracleApi'
 
@@ -19,21 +19,58 @@ interface Message {
   timestamp: Date
 }
 
-const services = [
-  { id: 'oracle', name: 'Oracle Assistant (Default)', icon: Bot, color: 'text-purple-400' },
-  { id: 'chainlink', name: 'Chainlink Price Feed', icon: Zap, color: 'text-blue-400' },
-  { id: 'coingecko', name: 'CoinGecko Data', icon: Coins, color: 'text-yellow-400' },
-  { id: 'weather', name: 'Weather Oracle', icon: Cloud, color: 'text-cyan-400' },
-  { id: 'ai-compute', name: '0G AI Compute', icon: Cpu, color: 'text-green-400' },
-  { id: 'analytics', name: 'Analytics & Monitoring', icon: BarChart3, color: 'text-red-400' },
+const perspectiveOracles = [
+  { 
+    id: 'coingecko-oracle', 
+    name: '🦎 CoinGecko', 
+    icon: Coins, 
+    color: 'text-yellow-400',
+    providers: ['coingecko'],
+    perspective: 'Crypto Market Data',
+    context: 'Real-time cryptocurrency prices via CoinGecko API',
+    description: 'BTC, ETH, BNB, ADA and 14+ crypto prices'
+  },
+  { 
+    id: 'weather-oracle', 
+    name: '🌤️ Weather', 
+    icon: Cloud, 
+    color: 'text-cyan-400',
+    providers: ['weather'],
+    perspective: 'Weather Data',
+    context: 'Global weather and climate information',
+    description: 'Temperature, humidity, forecasts for any location'
+  },
+  { 
+    id: 'web-search-oracle', 
+    name: '🔍 Web Search', 
+    icon: BarChart3, 
+    color: 'text-red-400',
+    providers: ['web-scraping'],
+    perspective: 'Web Intelligence',
+    context: 'Web scraping and search results',
+    description: 'News, market data, web content analysis'
+  },
+  { 
+    id: 'chat-oracle', 
+    name: '💬 Chat', 
+    icon: Bot, 
+    color: 'text-purple-400',
+    providers: ['conversational_ai'],
+    perspective: 'Conversation',
+    context: 'Natural language chat and help',
+    description: 'Friendly conversation, help, explanations'
+  }
 ]
+
+// Keep old services array for backward compatibility
+const services = perspectiveOracles
 
 export default function OracleAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       type: 'assistant',
-      content: 'Welcome to Negravis Oracle! ✨ This is your gateway to decentralized AI services powered by 0G.AI and Fluence Network. Please select an AI agent from the dropdown above and click "Launch Agent" to begin your session.',
+      content: 'Welcome to Negravis Oracle System! 🎭✨\n\n**Available Oracle Agents:**\n\n🦎 **CoinGecko** - Real-time cryptocurrency prices (BTC, ETH, BNB, ADA + 14 more)\n🌤️ **Weather** - Global weather data and forecasts for any location\n🔍 **Web Search** - Web scraping, news analysis, and search intelligence\n💬 **Chat** - Natural conversation, help, and system explanations\n\n**How to start:**\n1. Select your preferred Oracle from the dropdown above\n2. Click "Launch Agent" \n3. Start asking questions specific to that Oracle!\n\n🚀 Each Oracle specializes in different data types for focused, accurate results.',
       timestamp: new Date()
     }
   ])
@@ -78,7 +115,6 @@ export default function OracleAssistant() {
     }
 
     const currentInput = inputValue
-    const messageId = Date.now().toString()
     
     setMessages(prev => [...prev, userMessage])
     setInputValue('')
@@ -90,7 +126,7 @@ export default function OracleAssistant() {
 
     try {
       // Call real API with unique message tracking
-      const response = await generateResponse(currentInput, selectedService, messageId)
+      const response = await generateResponse(currentInput, selectedService)
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -114,53 +150,117 @@ export default function OracleAssistant() {
     }
   }
 
-  const formatQueryResponse = (data: Record<string, unknown>): string => {
+  const formatQueryResponse = (data: Record<string, unknown>, perspective?: string): string => {
     // Handle conversational AI responses
-    if (data.metadata?.isConversational || data.result?.type === 'conversational') {
-      return data.result.response || data.result;
+    const metadata = data.metadata as Record<string, unknown> | undefined
+    const result = data.result as Record<string, unknown> | undefined
+    
+    if (metadata?.isConversational || result?.type === 'conversational') {
+      return String((result as Record<string, unknown>)?.response) || String(data.result);
     }
 
     if (data.result && typeof data.result === 'object') {
-      // Handle system info queries
-      if (data.result.available_providers) {
-        return `📊 **System Information**\n\n**Available Providers:** ${data.result.total_providers}\n**System Health:** ${(data.result.system_health * 100).toFixed(0)}%\n\n**Providers:**\n${data.result.available_providers.map((p: Record<string, unknown>) => `• ${p.name} (${((p.reliability as number) * 100).toFixed(0)}% reliable)`).join('\n')}`;
+      // Handle price data with perspective
+      const resultObj = data.result as Record<string, unknown>
+      if (resultObj.symbol && resultObj.price) {
+        return formatPriceDataByPerspective(data, perspective);
       }
-      
-      // Handle price data
-      if (data.result.symbol && data.result.price) {
-        const result = data.result;
-        let response = `💰 **${result.symbol} Price: $${result.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}**`;
-        response += `\n📊 Confidence: ${(data.confidence * 100).toFixed(1)}%`;
-        response += `\n🔗 Sources: ${data.sources.join(', ')}`;
-        if (result.market_cap) {
-          response += `\n📈 Market Cap: $${result.market_cap.toLocaleString()}`;
-          response += `\n📊 24h Volume: $${result.volume_24h?.toLocaleString() || 'N/A'}`;
-          response += `\n${result.change_24h >= 0 ? '📈' : '📉'} 24h Change: ${result.change_24h?.toFixed(2) || 'N/A'}%`;
-        }
-        return response;
+
+      // Handle weather data with perspective
+      if (resultObj.temperature !== undefined || resultObj.location) {
+        return formatWeatherDataByPerspective(data, perspective);
       }
     }
     
-    // Fallback JSON display
-    return `✅ **Oracle Response:** ${JSON.stringify(data.result)} 📊 Confidence: ${(data.confidence * 100).toFixed(1)}% 🔗 Sources: ${data.sources.join(', ')} ⏱️ Response Time: ${data.execution_time_ms}ms 🔄 Method: ${data.consensus_method}`;
+    // Fallback with perspective
+    return formatFallbackByPerspective(data, perspective);
   };
 
-  const generateResponse = async (query: string, service: string, messageId?: string): Promise<string> => {
+  const formatPriceDataByPerspective = (data: Record<string, unknown>, perspective?: string): string => {
+    const result = data.result as Record<string, unknown>;
+    const symbol = result.symbol as string;
+    const price = result.price as number;
+    const confidence = (data.confidence as number * 100).toFixed(1);
+    const sources = (data.sources as string[]).join(', ');
+
+    switch (perspective) {
+      case 'coingecko-oracle':
+        return `💰 **${symbol} Financial Analysis**\n\n` +
+               `💵 **Current Price:** $${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}\n` +
+               `📊 **Data Confidence:** ${confidence}% (${sources})\n` +
+               (result.market_cap ? `📈 **Market Cap:** $${(result.market_cap as number).toLocaleString()}\n` : '') +
+               (result.volume_24h ? `💹 **24h Volume:** $${(result.volume_24h as number).toLocaleString()}\n` : '') +
+               (result.change_24h ? `${(result.change_24h as number) >= 0 ? '🟢' : '🔴'} **24h Change:** ${(result.change_24h as number).toFixed(2)}%\n` : '') +
+               `\n🦎 **CoinGecko Data:** Real-time cryptocurrency market data from CoinGecko API.`;
+      
+      case 'web-search-oracle':
+        return `📊 **${symbol} Market Intelligence**\n\n` +
+               `🎯 **Price Signal:** $${price.toLocaleString()}\n` +
+               `🧠 **Intelligence Grade:** ${confidence}% confidence\n` +
+               `🔍 **Data Sources:** ${sources}\n` +
+               (result.change_24h ? `📈 **Momentum:** ${(result.change_24h as number) >= 0 ? 'Bullish' : 'Bearish'} (${(result.change_24h as number).toFixed(2)}%)\n` : '') +
+               `\n🔮 **Market Intelligence:** Real-time price discovery through consensus algorithms.`;
+      
+      default:
+        return `💰 **${symbol} Price: $${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}**\n` +
+               `📊 Confidence: ${confidence}%\n🔗 Sources: ${sources}` +
+               (result.market_cap ? `\n📈 Market Cap: $${(result.market_cap as number).toLocaleString()}` : '') +
+               (result.volume_24h ? `\n📊 24h Volume: $${(result.volume_24h as number).toLocaleString()}` : '') +
+               (result.change_24h ? `\n${(result.change_24h as number) >= 0 ? '📈' : '📉'} 24h Change: ${(result.change_24h as number).toFixed(2)}%` : '');
+    }
+  };
+
+  // System info formatting removed - no longer needed
+
+  const formatWeatherDataByPerspective = (data: Record<string, unknown>, perspective?: string): string => {
+    const result = data.result as Record<string, unknown>;
+    
+    switch (perspective) {
+      case 'weather-oracle':
+        return `🌍 **Environmental Analysis**\n\n` +
+               `📍 **Location:** ${result.location || 'Unknown'}\n` +
+               `🌡️ **Temperature:** ${result.temperature || 'N/A'}°C\n` +
+               `💧 **Humidity:** ${result.humidity || 'N/A'}%\n` +
+               `🌬️ **Wind Conditions:** ${result.wind_speed || 'N/A'} m/s\n` +
+               `☁️ **Sky Conditions:** ${result.weather_description || 'N/A'}\n\n` +
+               `🌿 **Environmental Perspective:** Real-time atmospheric monitoring for environmental assessment.`;
+      
+      default:
+        return `🌤️ **Weather Data:** ${JSON.stringify(result)}`;
+    }
+  };
+
+  const formatFallbackByPerspective = (data: Record<string, unknown>, perspective?: string): string => {
+    const confidence = (data.confidence as number * 100).toFixed(1);
+    const sources = (data.sources as string[]).join(', ');
+    
+    switch (perspective) {
+      case 'web-search-oracle':
+        return `🔍 **Web Search:** ${JSON.stringify(data.result)}\n📊 **Confidence:** ${confidence}% 🔗 **Sources:** ${sources}`;
+      case 'weather-oracle':
+        return `🌤️ **Weather Data:** ${JSON.stringify(data.result)}\n📊 **Accuracy:** ${confidence}% 🌿 **Sources:** ${sources}`;
+      case 'coingecko-oracle':
+        return `🦎 **CoinGecko:** ${JSON.stringify(data.result)}\n📊 **Confidence:** ${confidence}% 🔗 **Sources:** ${sources}`;
+      case 'chat-oracle':
+        return `💬 **Chat:** ${JSON.stringify(data.result)}\n📊 **Response:** ${confidence}% 🤖 **Sources:** ${sources}`;
+      default:
+        return `✅ **Oracle Response:** ${JSON.stringify(data.result)} 📊 Confidence: ${confidence}% 🔗 Sources: ${sources}`;
+    }
+  };
+
+  const generateResponse = async (query: string, service: string): Promise<string> => {
     setConnectionStatus('connecting')
     
-    // Auto-route weather queries to weather service, unless already weather service
-    const lowerQuery = query.toLowerCase();
-    if (service !== 'weather' && 
-        (lowerQuery.includes('weather') || lowerQuery.includes('wheather') || // typo tolerance
-         lowerQuery.includes('temperature') || lowerQuery.includes('forecast') || 
-         lowerQuery.includes('climate'))) {
-      console.log(`🌤️ Auto-routing weather query: "${query}" → weather service`);
-      return generateResponse(query, 'weather', messageId);
+    // Get selected Oracle perspective
+    const selectedOracle = perspectiveOracles.find(oracle => oracle.id === service);
+    if (selectedOracle) {
+      console.log(`🎭 Using ${selectedOracle.name} perspective for query: "${query}"`);
+      console.log(`📋 Context: ${selectedOracle.context}`);
     }
     
     try {
       switch (service) {
-        case 'chainlink':
+        case 'coingecko-oracle':
         case 'coingecko':
           // Use direct API call to avoid state caching
           try {
@@ -168,7 +268,7 @@ export default function OracleAssistant() {
             
             if (directResponse.success) {
               setConnectionStatus('connected')
-              return formatQueryResponse(directResponse.data);
+              return formatQueryResponse(directResponse.data, selectedOracle?.id);
             } else {
               setConnectionStatus('connected')
               return `❌ Query failed: ${directResponse.error || 'Unknown error'}`;
@@ -179,6 +279,7 @@ export default function OracleAssistant() {
           }
           break;
           
+        case 'weather-oracle':
         case 'weather':
           // Extract location from query (with typo tolerance)
           const locationMatch = query.match(/\b(?:weather|wheather|temperature|climate)(?:\s+(?:in|at|for))?\s+([A-Za-z\s,]+)/i) || 
@@ -216,27 +317,39 @@ export default function OracleAssistant() {
           }
           break;
           
-        case 'analytics':
-          // Use direct API call to avoid state caching
+        case 'web-search-oracle':
+          // Route to web-scraping for market intelligence
           try {
-            const statusResponse = await oracleApi.getSystemStatus();
+            const intelligenceResponse = await oracleApi.query(query);
             
-            if (statusResponse.success && statusResponse.data) {
+            if (intelligenceResponse.success) {
               setConnectionStatus('connected')
-              const data = statusResponse.data;
-              let response = `📊 System Analytics:`;
-              response += `\n🔧 Providers: ${data.system.active_providers}/${data.system.total_providers} active`;
-              response += `\n💚 Health: ${(data.system.system_health * 100).toFixed(1)}%`;
-              response += `\n⏱️ Uptime: ${Math.floor(data.uptime / 3600)}h ${Math.floor((data.uptime % 3600) / 60)}m`;
-              response += `\n🤖 Chatbots: ${data.chatbots?.active_bots || 0} active`;
-              return response;
+              return `🔍 **Web Search Analysis:**\n\n${formatQueryResponse(intelligenceResponse.data, 'web-search-oracle')}\n\n💡 *Analyzed using web scraping and search intelligence.*`;
             } else {
               setConnectionStatus('connected')
-              return `❌ Could not fetch system status: ${statusResponse.error || 'Unknown error'}`;
+              return `❌ Market Intelligence analysis failed: ${intelligenceResponse.error || 'Unknown error'}`;
             }
-          } catch (statusError: unknown) {
+          } catch (intelligenceError: unknown) {
             setConnectionStatus('connected')
-            return `❌ Status API Error: ${statusError instanceof Error ? statusError.message : 'Unknown status error'}`;
+            return `❌ Market Intelligence Error: ${intelligenceError instanceof Error ? intelligenceError.message : 'Unknown intelligence error'}`;
+          }
+          break;
+          
+        case 'chat-oracle':
+          // Route to conversational AI
+          try {
+            const conversationResponse = await oracleApi.query(query);
+            
+            if (conversationResponse.success) {
+              setConnectionStatus('connected')
+              return `💬 **Chat Response:**\n\n${formatQueryResponse(conversationResponse.data, 'chat-oracle')}\n\n🤖 *Natural language conversation.*`;
+            } else {
+              setConnectionStatus('connected')
+              return `❌ Conversational analysis failed: ${conversationResponse.error || 'Unknown error'}`;
+            }
+          } catch (conversationError: unknown) {
+            setConnectionStatus('connected')
+            return `❌ Conversational Error: ${conversationError instanceof Error ? conversationError.message : 'Unknown conversation error'}`;
           }
           break;
           
@@ -251,7 +364,7 @@ export default function OracleAssistant() {
             
             if (defaultResponse.success) {
               setConnectionStatus('connected')
-              return formatQueryResponse(defaultResponse.data);
+              return formatQueryResponse(defaultResponse.data, selectedOracle?.id);
             } else {
               setConnectionStatus('connected')
               return `❌ Query failed: ${defaultResponse.error || 'Unknown error'}`;
@@ -286,11 +399,36 @@ export default function OracleAssistant() {
       void error;
     }
     
-    const serviceName = services.find(s => s.id === selectedService)?.name || 'Oracle Assistant'
+    const selectedOracle = perspectiveOracles.find(s => s.id === selectedService)
+    const serviceName = selectedOracle?.name || 'Oracle Assistant'
+    
+    let welcomeContent = '';
+    
+    switch (selectedService) {
+      case 'coingecko-oracle':
+        welcomeContent = `🦎 **CoinGecko Oracle Activated!**\n\n💰 I'm your cryptocurrency market data specialist!\n\n**What I can do:**\n• Get real-time prices for BTC, ETH, BNB, ADA and 14+ cryptocurrencies\n• Provide market cap, trading volume, and 24h price changes\n• Multi-source price validation for accuracy\n\n**Try asking:**\n• "What's the Bitcoin price?"\n• "BNB price today"\n• "ETH market cap"\n• "Solana 24h change"\n\n🚀 Ready to fetch crypto data!`;
+        break;
+        
+      case 'weather-oracle':
+        welcomeContent = `🌤️ **Weather Oracle Activated!**\n\n🌍 I'm your global weather information specialist!\n\n**What I can do:**\n• Get current weather for any city worldwide\n• Provide temperature, humidity, wind speed\n• Weather conditions and forecasts\n• Climate data analysis\n\n**Try asking:**\n• "Weather in Istanbul"\n• "Temperature in London"\n• "How's the weather in Tokyo?"\n• "Climate in New York"\n\n☁️ Ready to check the skies!`;
+        break;
+        
+      case 'web-search-oracle':
+        welcomeContent = `🔍 **Web Search Oracle Activated!**\n\n🌐 I'm your web intelligence and search specialist!\n\n**What I can do:**\n• Scrape news and market data from websites\n• Search for current information online\n• Analyze web content and trends\n• Gather intelligence from multiple sources\n\n**Try asking:**\n• "Search for Bitcoin news"\n• "Latest crypto market trends"\n• "Web search: AI developments"\n• "Find information about..."\n\n🔎 Ready to search the web!`;
+        break;
+        
+      case 'chat-oracle':
+        welcomeContent = `💬 **Chat Oracle Activated!**\n\n🤖 I'm your conversational AI companion!\n\n**What I can do:**\n• Have friendly natural conversations\n• Answer questions about the Oracle system\n• Provide help and explanations\n• Chat about various topics\n\n**Try saying:**\n• "Hello! How are you?"\n• "What can you help me with?"\n• "Tell me about this system"\n• "I need some assistance"\n\n💫 Ready for a chat!`;
+        break;
+        
+      default:
+        welcomeContent = `🎭 ${serviceName} activated!\n\n🔮 Oracle system ready to assist you.\n\nWhat would you like me to help you with?`;
+    }
+    
     const welcomeMessage: Message = {
       id: (Date.now() + 2).toString(),
       type: 'assistant',
-      content: `🚀 ${serviceName} activated!\n\nI'm ready to assist you with:\n• 💰 Cryptocurrency prices (BTC, ETH, etc.)\n• 🌤️ Weather data for any location\n• 📊 System analytics and health status\n• 🤖 AI-powered computations\n• 🔍 General oracle queries\n\nWhat would you like to explore?`,
+      content: welcomeContent,
       timestamp: new Date()
     }
     setMessages(prev => [...prev, welcomeMessage])
@@ -376,7 +514,7 @@ export default function OracleAssistant() {
                 ? 'bg-blue-600 text-white' 
                 : 'bg-gray-800 text-gray-100'
             }`}>
-              <p className="text-sm">{message.content}</p>
+              <div className="text-sm whitespace-pre-wrap">{message.content}</div>
               <span className="text-xs text-gray-400 mt-1 block">
                 {message.timestamp.toLocaleTimeString()}
               </span>

@@ -138,8 +138,21 @@ export class OracleRouter {
     };
 
     try {
-      // Get consensus result from oracle providers
-      const result = await this.consensusService.getConsensus(queryText, options);
+      // Determine query type and filter appropriate providers
+      const queryType = this.determineQueryType(queryText);
+      const perspectiveProviders = options?.sources; // Frontend can send perspective-based providers
+      const appropriateProviders = this.getProvidersForQueryType(queryType, perspectiveProviders);
+      
+      // Create filtered options with appropriate providers
+      const filteredOptions = {
+        ...options,
+        sources: appropriateProviders
+      };
+      
+      console.log(`🎯 Query type: ${queryType}, using providers: [${appropriateProviders.join(', ')}]`);
+      
+      // Get consensus result from filtered oracle providers
+      const result = await this.consensusService.getConsensus(queryText, filteredOptions);
 
       // Add metadata to indicate this is not conversational
       result.metadata = {
@@ -363,6 +376,38 @@ export class OracleRouter {
     }
   }
 
+  /**
+   * Get appropriate providers for a specific query type
+   * Now supports perspective-based filtering
+   */
+  private getProvidersForQueryType(queryType: OracleQueryType, perspectiveHint?: string[]): string[] {
+    // If perspective hint is provided, use it
+    if (perspectiveHint && perspectiveHint.length > 0) {
+      console.log(`🎭 Using perspective-based providers: [${perspectiveHint.join(', ')}]`);
+      return perspectiveHint.filter(provider => this.providers.has(provider));
+    }
+    
+    // Otherwise, use query type-based routing
+    switch (queryType) {
+      case OracleQueryType.PRICE_FEED:
+        return ['chainlink', 'coingecko']; // Only crypto price providers
+        
+      case OracleQueryType.WEATHER_DATA:
+        return ['weather']; // Only weather provider
+        
+      case OracleQueryType.NEWS_VERIFICATION:
+        return ['web-scraping']; // Only web scraping for news
+        
+      case OracleQueryType.WEB_SEARCH:
+        return ['web-scraping']; // Only web scraping for search
+        
+      case OracleQueryType.CUSTOM:
+      default:
+        // For system status or unknown queries, use all available providers
+        return Array.from(this.providers.keys());
+    }
+  }
+
   private determineQueryType(query: string): OracleQueryType {
     const lowerQuery = query.toLowerCase();
     
@@ -373,16 +418,18 @@ export class OracleRouter {
       return OracleQueryType.CUSTOM;
     }
     
-    // Price queries
-    if (lowerQuery.includes('price') || lowerQuery.includes('cost') ||
-        lowerQuery.match(/\b(btc|bitcoin|eth|ethereum|ada|dot|sol|matic|avax|atom|link|uni)\b/i)) {
+    // Price queries - enhanced crypto symbol detection
+    if (lowerQuery.includes('price') || lowerQuery.includes('cost') || lowerQuery.includes('value') ||
+        lowerQuery.match(/\b(btc|bitcoin|eth|ethereum|bnb|binance|ada|cardano|dot|polkadot|sol|solana|matic|polygon|hbar|hedera|avax|avalanche|atom|cosmos|link|chainlink|xrp|ripple|doge|dogecoin|ltc|litecoin|uni|uniswap)\b/i)) {
       return OracleQueryType.PRICE_FEED;
     }
     
-    // Weather queries (with typo tolerance)
-    if (lowerQuery.includes('weather') || lowerQuery.includes('wheather') ||
+    // Weather queries (with typo tolerance and city detection)
+    if (lowerQuery.includes('weather') || lowerQuery.includes('wheather') || lowerQuery.includes('whather') ||
         lowerQuery.includes('temperature') || lowerQuery.includes('forecast') || 
-        lowerQuery.includes('climate')) {
+        lowerQuery.includes('climate') ||
+        // Common city patterns that indicate weather queries
+        lowerQuery.match(/\b(istanbul|ankara|izmir|denizli|antalya|london|paris|berlin|moscow|tokyo|new york|los angeles)\b/i)) {
       return OracleQueryType.WEATHER_DATA;
     }
     
