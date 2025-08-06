@@ -9,6 +9,7 @@ import { initializeApplication } from './startup';
 // Import routes
 import accountRoutes from './routes/accountRoutes';
 import serviceRoutes from './routes/serviceRoutes';
+import hfsRoutes from './routes/hfsRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -36,6 +37,7 @@ const apiPrefix = '/api';
 // Register routes
 app.use(`${apiPrefix}/account`, accountRoutes);
 app.use(`${apiPrefix}/services`, serviceRoutes);
+app.use(`${apiPrefix}/hfs`, hfsRoutes);
 
 // Root route - serve the landing page
 app.get('/', (req: Request, res: Response) => {
@@ -61,6 +63,7 @@ app.get('/api/info', (req: Request, res: Response) => {
     endpoints: {
       account: `${apiPrefix}/account`,
       services: `${apiPrefix}/services`,
+      hfs: `${apiPrefix}/hfs`,
     }
   });
 });
