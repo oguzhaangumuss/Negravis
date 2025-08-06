@@ -9,6 +9,29 @@ interface PriceUpdateData {
   source: string;
 }
 
+// Issue #6: Enhanced interfaces for dynamic oracle selection
+interface DynamicPriceUpdateData extends PriceUpdateData {
+  confidence: number;          // 0-1 confidence score
+  weights?: number[];          // Provider weights used
+  outliers?: string[];         // Outlier sources removed
+  qualityMetrics?: {
+    accuracy: number;
+    freshness: number;
+    consistency: number;
+  };
+  providers: string[];         // All providers used
+  aggregationMethod: string;   // Method used for aggregation
+}
+
+interface OracleValidationData {
+  symbol: string;
+  providers: string[];
+  consensusThreshold: number;
+  weights: number[];
+  isValid: boolean;
+  confidence: number;
+}
+
 interface ContractPriceData {
   price: string;
   timestamp: string;
@@ -86,9 +109,16 @@ export class OracleContractService {
   }
 
   /**
-   * Update price in the smart contract
+   * Update price in the smart contract (backward compatible)
    */
   async updateContractPrice(priceData: PriceUpdateData): Promise<void> {
+    return this.updateContractPriceWithDynamicSelection(priceData);
+  }
+
+  /**
+   * Issue #6: Update price with dynamic oracle selection data
+   */
+  async updateContractPriceWithDynamicSelection(priceData: PriceUpdateData | DynamicPriceUpdateData): Promise<void> {
     if (!this.isInitialized) {
       await this.initialize();
     }
@@ -98,16 +128,31 @@ export class OracleContractService {
     }
 
     try {
-      console.log(`📊 Updating contract price for ${priceData.symbol}: $${priceData.price}`);
+      const isDynamicData = 'confidence' in priceData;
+      console.log(`📊 Updating contract price for ${priceData.symbol}: $${priceData.price}${isDynamicData ? ` (confidence: ${((priceData as DynamicPriceUpdateData).confidence * 100).toFixed(1)}%)` : ''}`);
 
       // Convert price to wei (multiply by 10^18 for precision)
       const priceInWei = Math.floor(priceData.price * 1e18);
+      const confidence = isDynamicData ? Math.floor((priceData as DynamicPriceUpdateData).confidence * 100) : 100;
 
-      // Execute contract function to update price
+      // For dynamic data, also validate with oracle consensus
+      if (isDynamicData) {
+        const dynamicData = priceData as DynamicPriceUpdateData;
+        await this.validateOracleConsensus({
+          symbol: priceData.symbol,
+          providers: dynamicData.providers,
+          consensusThreshold: 0.6, // 60% consensus required
+          weights: dynamicData.weights || [],
+          isValid: true,
+          confidence: dynamicData.confidence
+        });
+      }
+
+      // Execute contract function to update price with confidence
       const response = await contractManager.executeContract(
         'PriceFeed',
-        'updatePrice',
-        [priceData.symbol, priceInWei]
+        'updatePriceWithMetadata',
+        [priceData.symbol, priceInWei, confidence, priceData.timestamp]
       );
 
       const receipt = await response.getReceipt(contractManager['client']);
@@ -115,8 +160,8 @@ export class OracleContractService {
       console.log(`✅ Price updated in contract for ${priceData.symbol}`);
       console.log(`🔗 Transaction ID: ${response.transactionId}`);
 
-      // Log to HCS
-      await this.logPriceUpdate({
+      // Log to HCS with enhanced data
+      await this.logDynamicPriceUpdate({
         ...priceData,
         contractId: this.priceFeedContractId,
         transactionId: response.transactionId.toString(),
@@ -262,22 +307,41 @@ export class OracleContractService {
   }
 
   /**
-   * Log price update to HCS
+   * Log price update to HCS (backward compatible)
    */
   private async logPriceUpdate(data: any): Promise<void> {
+    return this.logDynamicPriceUpdate(data);
+  }
+
+  /**
+   * Issue #6: Enhanced logging for dynamic oracle selection
+   */
+  private async logDynamicPriceUpdate(data: any): Promise<void> {
     try {
-      await hcsService.logOracleQuery({
+      const isDynamicData = 'confidence' in data;
+      
+      let logData = {
         queryId: `price_update_${data.symbol}_${Date.now()}`,
-        inputPrompt: `Update price for ${data.symbol}`,
-        aiResponse: `Price updated to $${data.price}`,
-        model: 'smart_contract',
-        provider: data.source,
+        inputPrompt: `Update price for ${data.symbol}${isDynamicData ? ` using ${data.providers?.length || 1} providers` : ''}`,
+        aiResponse: `Price updated to $${data.price}${isDynamicData ? `, confidence: ${(data.confidence * 100).toFixed(1)}%` : ''}`,
+        model: isDynamicData ? 'dynamic_oracle_smart_contract' : 'smart_contract',
+        provider: data.source || 'oracle_manager',
         cost: data.gasUsed * 0.000001, // Estimate cost in HBAR
         executionTime: 1000, // Estimate
         success: true
-      });
+      };
+
+      // Add dynamic selection metadata if available
+      if (isDynamicData && data.providers) {
+        logData.inputPrompt += ` (${data.aggregationMethod}, outliers: ${data.outliers?.length || 0})`;
+        logData.aiResponse += `, providers: [${data.providers.join(', ')}]`;
+      }
+
+      await hcsService.logOracleQuery(logData);
+      
+      console.log(`📝 Enhanced price update logged to HCS: ${data.symbol} with ${isDynamicData ? 'dynamic' : 'standard'} selection`);
     } catch (error) {
-      console.log("⚠️ Failed to log price update to HCS:", error);
+      console.log("⚠️ Failed to log dynamic price update to HCS:", error);
     }
   }
 
@@ -310,6 +374,161 @@ export class OracleContractService {
       contractInfo: contractManager.getContractInfo('PriceFeed'),
       isInitialized: this.isInitialized
     };
+  }
+
+  /**
+   * Issue #6: Validate oracle consensus before contract update
+   */
+  private async validateOracleConsensus(data: OracleValidationData): Promise<void> {
+    try {
+      console.log(`🔍 Validating oracle consensus for ${data.symbol}`);
+      
+      if (!this.priceFeedContractId) {
+        throw new Error('PriceFeed contract not deployed');
+      }
+
+      // Execute contract function to validate consensus
+      const response = await contractManager.executeContract(
+        'PriceFeed',
+        'validateOracleConsensus',
+        [
+          data.symbol,
+          data.providers.length,
+          Math.floor(data.consensusThreshold * 100),
+          Math.floor(data.confidence * 100)
+        ]
+      );
+
+      console.log(`✅ Oracle consensus validated for ${data.symbol}`);
+      
+      // Log validation to HCS
+      await hcsService.logOracleQuery({
+        queryId: `consensus_validation_${data.symbol}_${Date.now()}`,
+        inputPrompt: `Validate consensus for ${data.symbol} with ${data.providers.length} providers`,
+        aiResponse: `Consensus validated: ${data.providers.length} providers, ${(data.confidence * 100).toFixed(1)}% confidence`,
+        model: 'oracle_consensus_validation',
+        provider: 'hedera_smart_contract',
+        cost: 0,
+        executionTime: 500,
+        success: true
+      });
+
+    } catch (error: any) {
+      console.error(`❌ Failed to validate oracle consensus for ${data.symbol}:`, error.message);
+      
+      // Log validation error
+      await hcsService.logOracleQuery({
+        queryId: `consensus_validation_error_${data.symbol}_${Date.now()}`,
+        inputPrompt: `Validate consensus for ${data.symbol}`,
+        aiResponse: `Validation failed: ${error.message}`,
+        model: 'oracle_consensus_validation',
+        provider: 'hedera_smart_contract',
+        cost: 0,
+        executionTime: 0,
+        success: false
+      });
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Issue #6: Get dynamic oracle selection configuration from contract
+   */
+  async getDynamicOracleConfig(symbol: string): Promise<{
+    minProviders: number;
+    maxProviders: number;
+    consensusThreshold: number;
+    outlierThreshold: number;
+  }> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    if (!this.priceFeedContractId) {
+      throw new Error('PriceFeed contract not deployed');
+    }
+
+    try {
+      const result = await contractManager.queryContract(
+        'PriceFeed',
+        'getDynamicOracleConfig',
+        [symbol]
+      );
+
+      return {
+        minProviders: result.getUint256(0).toNumber(),
+        maxProviders: result.getUint256(1).toNumber(),
+        consensusThreshold: result.getUint256(2).toNumber() / 100,
+        outlierThreshold: result.getUint256(3).toNumber() / 100
+      };
+
+    } catch (error: any) {
+      console.error(`❌ Failed to get dynamic oracle config for ${symbol}:`, error.message);
+      // Return default configuration
+      return {
+        minProviders: 1,
+        maxProviders: 5,
+        consensusThreshold: 0.6,
+        outlierThreshold: 0.2
+      };
+    }
+  }
+
+  /**
+   * Issue #6: Update dynamic oracle selection configuration in contract
+   */
+  async updateDynamicOracleConfig(
+    symbol: string,
+    config: {
+      minProviders: number;
+      maxProviders: number;
+      consensusThreshold: number;
+      outlierThreshold: number;
+    }
+  ): Promise<void> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    if (!this.priceFeedContractId) {
+      throw new Error('PriceFeed contract not deployed');
+    }
+
+    try {
+      console.log(`🔧 Updating dynamic oracle config for ${symbol}`);
+
+      const response = await contractManager.executeContract(
+        'PriceFeed',
+        'updateDynamicOracleConfig',
+        [
+          symbol,
+          config.minProviders,
+          config.maxProviders,
+          Math.floor(config.consensusThreshold * 100),
+          Math.floor(config.outlierThreshold * 100)
+        ]
+      );
+
+      console.log(`✅ Dynamic oracle config updated for ${symbol}`);
+      console.log(`🔗 Transaction ID: ${response.transactionId}`);
+
+      // Log configuration update
+      await hcsService.logOracleQuery({
+        queryId: `config_update_${symbol}_${Date.now()}`,
+        inputPrompt: `Update dynamic oracle config for ${symbol}`,
+        aiResponse: `Config updated: min=${config.minProviders}, max=${config.maxProviders}, consensus=${config.consensusThreshold}, outlier=${config.outlierThreshold}`,
+        model: 'oracle_config_update',
+        provider: 'hedera_smart_contract',
+        cost: 0,
+        executionTime: 1000,
+        success: true
+      });
+
+    } catch (error: any) {
+      console.error(`❌ Failed to update dynamic oracle config for ${symbol}:`, error.message);
+      throw error;
+    }
   }
 
   /**
