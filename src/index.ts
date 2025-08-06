@@ -10,6 +10,7 @@ import { initializeApplication } from './startup';
 import accountRoutes from './routes/accountRoutes';
 import serviceRoutes from './routes/serviceRoutes';
 import contractRoutes from './routes/contractRoutes';
+import oracleRoutes from './routes/oracleRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -38,6 +39,7 @@ const apiPrefix = '/api';
 app.use(`${apiPrefix}/account`, accountRoutes);
 app.use(`${apiPrefix}/services`, serviceRoutes);
 app.use(`${apiPrefix}/contracts`, contractRoutes);
+app.use(`${apiPrefix}/oracles`, oracleRoutes);
 
 // Root route - serve the landing page
 app.get('/', (req: Request, res: Response) => {
@@ -179,9 +181,9 @@ app.post('/api/explorer/transactions/status', async (req: Request, res: Response
       transactions: formattedHistory,
       summary: {
         total: transactions.length,
-        successful: transactions.filter(tx => tx.status === 'success').length,
-        pending: transactions.filter(tx => tx.status === 'pending').length,
-        failed: transactions.filter(tx => tx.status === 'failed').length
+        successful: transactions.filter((tx: any) => tx.status === 'success').length,
+        pending: transactions.filter((tx: any) => tx.status === 'pending').length,
+        failed: transactions.filter((tx: any) => tx.status === 'failed').length
       }
     });
   } catch (error: any) {

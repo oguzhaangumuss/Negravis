@@ -1,5 +1,6 @@
 import { brokerService } from './services/brokerService';
 import { oracleContractService } from './services/blockchain/oracleContractService';
+import { oracleManager } from './services/oracleManager';
 
 /**
  * Initialize the application and ensure prerequisite resources exist
@@ -28,6 +29,16 @@ export const initializeApplication = async (): Promise<void> => {
     } catch (contractError: any) {
       console.log('⚠️ Smart Contract initialization failed (non-critical):', contractError.message);
       console.log('📍 Contract Error stack:', contractError.stack);
+    }
+
+    // Initialize Oracle Manager
+    try {
+      console.log('🔧 Initializing Oracle Manager...');
+      await oracleManager.initialize();
+      console.log('✅ Oracle Manager initialized successfully');
+    } catch (oracleError: any) {
+      console.log('⚠️ Oracle Manager initialization failed (non-critical):', oracleError.message);
+      console.log('📍 Oracle Error stack:', oracleError.stack);
     }
     
     console.log('✅ Application initialization complete');
