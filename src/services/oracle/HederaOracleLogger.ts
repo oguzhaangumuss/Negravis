@@ -94,11 +94,11 @@ export class HederaOracleLogger {
       query: query.query,
       result: {
         ...result,
-        raw_responses: result.raw_responses.map(r => ({
+        raw_responses: result.raw_responses?.map(r => ({
           ...r,
           // Remove large metadata to reduce message size
           metadata: r.metadata ? { latency: r.metadata.latency } : undefined
-        }))
+        })) || []
       },
       hcs_timestamp: new Date().toISOString(),
       transaction_id: ''

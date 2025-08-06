@@ -44,16 +44,30 @@ export enum ConsensusMethod {
   MEDIAN = 'median',
   WEIGHTED_AVERAGE = 'weighted_average',
   MAJORITY_VOTE = 'majority_vote',
-  CONFIDENCE_WEIGHTED = 'confidence_weighted'
+  CONFIDENCE_WEIGHTED = 'confidence_weighted',
+  AI_RESPONSE = 'ai_response'
 }
 
 export interface ConsensusResult {
+  query?: string;
   value: any;
   confidence: number;
   method: ConsensusMethod;
   sources: string[];
-  raw_responses: OracleResponse[];
+  raw_responses?: OracleResponse[];
+  rawResponses?: Array<{
+    provider: string;
+    value: any;
+    confidence: number;
+    responseTime: number;
+  }>;
   timestamp: Date;
+  executionTimeMs?: number;
+  metadata?: {
+    isConversational?: boolean;
+    totalProviders?: number;
+    [key: string]: any;
+  };
 }
 
 export enum OracleQueryType {

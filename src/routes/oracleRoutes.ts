@@ -388,7 +388,7 @@ router.get('/dynamic/:symbol', async (req: Request, res: Response) => {
         method: aggregatedData.method,
         timestamp: aggregatedData.timestamp,
         providersUsed: aggregatedData.sources.length,
-        rawResponses: aggregatedData.raw_responses.length
+        rawResponses: aggregatedData.raw_responses?.length || 0
       }
     });
 

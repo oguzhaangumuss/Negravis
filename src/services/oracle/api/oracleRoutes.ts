@@ -72,12 +72,14 @@ export function createOracleRoutes(
 
   // Core oracle endpoints
   router.get('/query', controller.query.bind(controller));
+  router.post('/query', controller.query.bind(controller));
   router.get('/price/:symbol', controller.getPrice.bind(controller));
   router.get('/weather/:location', controller.getWeather.bind(controller));
   
   // System information endpoints
   router.get('/providers', controller.getProviders.bind(controller));
   router.get('/status', controller.getStatus.bind(controller));
+  router.get('/health', controller.healthCheck.bind(controller));
   router.post('/health-check', controller.healthCheck.bind(controller));
 
   // Batch processing

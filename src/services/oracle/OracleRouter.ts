@@ -4,6 +4,7 @@ import { CustomAPIAdapter } from './adapters/CustomAPIAdapter';
 import { CoinGeckoOracleAdapter } from './adapters/CoinGeckoOracleAdapter';
 import { WeatherOracleAdapter } from './adapters/WeatherOracleAdapter';
 import { WebScrapingAdapter } from './adapters/WebScrapingAdapter';
+import { ConversationalAIService } from './ConversationalAIService';
 import { HederaOracleLogger } from './HederaOracleLogger';
 import { 
   OracleProvider, 
@@ -23,6 +24,7 @@ import { v4 as uuidv4 } from 'uuid';
  */
 export class OracleRouter {
   private consensusService: OracleConsensusService;
+  private conversationalAI: ConversationalAIService;
   private hederaLogger?: HederaOracleLogger;
   private providers: Map<string, OracleProvider> = new Map();
   private isInitialized = false;
@@ -34,6 +36,9 @@ export class OracleRouter {
       maxResponseTime: config?.consensus?.max_response_time || 10000,
       outlierThreshold: config?.consensus?.outlier_threshold || 0.3
     });
+    
+    // Initialize conversational AI service
+    this.conversationalAI = new ConversationalAIService();
   }
 
   /**
@@ -67,7 +72,7 @@ export class OracleRouter {
   }
 
   /**
-   * Query oracle system with consensus aggregation
+   * Query oracle system with AI routing and consensus aggregation
    */
   async query(
     queryText: string, 
@@ -77,6 +82,52 @@ export class OracleRouter {
       await this.initialize();
     }
 
+    console.log(`🔍 Processing query: "${queryText}"`);
+
+    // First, check if this is a conversational query
+    if (ConversationalAIService.isConversationalQuery(queryText)) {
+      console.log(`🤖 Routing to Conversational AI: "${queryText}"`);
+      
+      try {
+        const aiResponse = await this.conversationalAI.getConversationalResponse(queryText);
+        
+        // Return AI response in ConsensusResult format
+        const result: ConsensusResult = {
+          query: queryText,
+          value: {
+            response: aiResponse,
+            type: 'conversational',
+            intent: this.conversationalAI.detectConversationalIntent(queryText)
+          },
+          confidence: 0.95,
+          sources: ['conversational_ai'],
+          method: ConsensusMethod.AI_RESPONSE,
+          timestamp: new Date(),
+          executionTimeMs: Date.now() - Date.now(), // Minimal time for AI responses
+          rawResponses: [{
+            provider: 'conversational_ai',
+            value: aiResponse,
+            confidence: 0.95,
+            responseTime: 50
+          }],
+          metadata: {
+            isConversational: true,
+            totalProviders: 1
+          }
+        };
+
+        console.log(`✅ Conversational AI response generated`);
+        return result;
+
+      } catch (aiError: any) {
+        console.warn(`⚠️ Conversational AI failed, falling back to Oracle: ${aiError.message}`);
+        // Fall through to oracle processing
+      }
+    }
+
+    // Route to Oracle system for data queries
+    console.log(`🔮 Routing to Oracle system: "${queryText}"`);
+    
     const query: OracleQuery = {
       id: uuidv4(),
       type: this.determineQueryType(queryText),
@@ -86,11 +137,15 @@ export class OracleRouter {
       options: options || {}
     };
 
-    console.log(`🔍 Processing oracle query: "${queryText}"`);
-
     try {
-      // Get consensus result
+      // Get consensus result from oracle providers
       const result = await this.consensusService.getConsensus(queryText, options);
+
+      // Add metadata to indicate this is not conversational
+      result.metadata = {
+        ...result.metadata,
+        isConversational: false
+      };
 
       // Log to Hedera if enabled
       if (this.hederaLogger) {
@@ -311,15 +366,32 @@ export class OracleRouter {
   private determineQueryType(query: string): OracleQueryType {
     const lowerQuery = query.toLowerCase();
     
-    if (lowerQuery.includes('price') || lowerQuery.includes('cost')) {
+    // System status queries
+    if (lowerQuery.includes('provider') || lowerQuery.includes('service') || 
+        lowerQuery.includes('status') || lowerQuery.includes('health') ||
+        lowerQuery.includes('balance') || lowerQuery.includes('available')) {
+      return OracleQueryType.CUSTOM;
+    }
+    
+    // Price queries
+    if (lowerQuery.includes('price') || lowerQuery.includes('cost') ||
+        lowerQuery.match(/\b(btc|bitcoin|eth|ethereum|ada|dot|sol|matic|avax|atom|link|uni)\b/i)) {
       return OracleQueryType.PRICE_FEED;
     }
-    if (lowerQuery.includes('weather') || lowerQuery.includes('temperature')) {
+    
+    // Weather queries (with typo tolerance)
+    if (lowerQuery.includes('weather') || lowerQuery.includes('wheather') ||
+        lowerQuery.includes('temperature') || lowerQuery.includes('forecast') || 
+        lowerQuery.includes('climate')) {
       return OracleQueryType.WEATHER_DATA;
     }
+    
+    // News queries
     if (lowerQuery.includes('news') || lowerQuery.includes('headline')) {
       return OracleQueryType.NEWS_VERIFICATION;
     }
+    
+    // Web search queries
     if (lowerQuery.includes('search') || lowerQuery.includes('google')) {
       return OracleQueryType.WEB_SEARCH;
     }

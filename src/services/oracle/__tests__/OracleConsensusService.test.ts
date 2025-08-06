@@ -250,9 +250,9 @@ describe('OracleConsensusService', () => {
       const result = await consensusService.getConsensus('BTC price');
 
       expect(result.raw_responses).toHaveLength(3);
-      expect(result.raw_responses[0]).toHaveProperty('data');
-      expect(result.raw_responses[0]).toHaveProperty('confidence');
-      expect(result.raw_responses[0]).toHaveProperty('source');
+      expect(result.raw_responses?.[0]).toHaveProperty('data');
+      expect(result.raw_responses?.[0]).toHaveProperty('confidence');
+      expect(result.raw_responses?.[0]).toHaveProperty('source');
     });
 
     it('should include consensus timestamp', async () => {

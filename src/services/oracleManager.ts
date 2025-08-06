@@ -125,7 +125,7 @@ export class OracleManager {
     // Log to HCS
     await this.logAggregation(result);
 
-    // Update smart contract if available (backward compatible)
+    // Update smart contract if available (with improved error handling)
     try {
       // Extract price from result.value (handle both object and number cases)
       let price = result.value;
@@ -140,14 +140,23 @@ export class OracleManager {
         return result;
       }
       
+      console.log(`📊 Updating contract price for ${symbol}: $${numericPrice}`);
+      
       await oracleContractService.updateContractPrice({
         symbol: symbol.toUpperCase(),
         price: numericPrice,
         timestamp: Date.now(),
         source: 'Oracle Manager'
       });
-    } catch (error) {
-      console.log('⚠️ Could not update smart contract:', error);
+      
+      console.log(`✅ Contract price updated successfully for ${symbol}`);
+      
+    } catch (error: any) {
+      // Log error but don't fail the entire operation
+      console.log(`⚠️ Could not update smart contract for ${symbol}:`, error.message);
+      
+      // Log the specific error to HCS for debugging
+      await this.logPriceError(symbol, error.message);
     }
 
     return result;
@@ -265,6 +274,26 @@ export class OracleManager {
    */
   getStartTime(): number {
     return this.startTime;
+  }
+
+  /**
+   * Log price update errors to HCS
+   */
+  private async logPriceError(symbol: string, error: string): Promise<void> {
+    try {
+      await hcsService.logOracleQuery({
+        queryId: `price_error_${symbol}_${Date.now()}`,
+        inputPrompt: `Price update failed for ${symbol}`,
+        aiResponse: `Error: ${error} - Type: CONTRACT_UPDATE_FAILED, Symbol: ${symbol}, Time: ${new Date().toISOString()}`,
+        model: 'contract_update',
+        provider: 'Oracle Manager',
+        cost: 0,
+        executionTime: 0,
+        success: false
+      });
+    } catch (logError: any) {
+      console.log('⚠️ Could not log price error to HCS:', logError.message);
+    }
   }
 
   /**

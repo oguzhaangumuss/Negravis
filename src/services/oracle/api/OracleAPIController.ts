@@ -49,26 +49,95 @@ export class OracleAPIController {
         }
       }
 
+      // Handle system queries differently
+      const lowerQuery = query.toLowerCase();
       const startTime = Date.now();
+      
+      // Check for system information requests
+      if (lowerQuery.includes('provider') || lowerQuery.includes('service') || 
+          lowerQuery.includes('available') || lowerQuery.includes('balance')) {
+        const executionTime = Date.now() - startTime;
+        
+        const providers = this.oracleRouter.getProviders();
+        const systemInfo = {
+          available_providers: providers.map(p => ({
+            name: p.name,
+            weight: p.weight,
+            reliability: p.reliability,
+            latency: p.latency
+          })),
+          total_providers: providers.length,
+          system_health: providers.filter(p => p.reliability > 0.8).length / providers.length,
+          query_processed: query
+        };
+
+        res.json({
+          success: true,
+          data: {
+            query,
+            result: systemInfo,
+            confidence: 1.0,
+            consensus_method: 'system_info',
+            sources: ['oracle_router'],
+            timestamp: new Date().toISOString(),
+            execution_time_ms: executionTime
+          },
+          metadata: {
+            raw_responses: 1,
+            query_options: options,
+            query_type: 'system_info'
+          }
+        });
+        return;
+      }
+
       const result = await this.oracleRouter.query(query, options);
       const executionTime = Date.now() - startTime;
 
-      res.json({
-        success: true,
-        data: {
-          query,
-          result: result.value,
-          confidence: result.confidence,
-          consensus_method: result.method,
-          sources: result.sources,
-          timestamp: result.timestamp,
-          execution_time_ms: executionTime
-        },
-        metadata: {
-          raw_responses: result.raw_responses?.length || 0,
-          query_options: options
-        }
-      });
+      // Handle conversational AI responses specially
+      if (result.metadata?.isConversational) {
+        res.json({
+          success: true,
+          data: {
+            query,
+            result: {
+              response: result.value.response,
+              type: 'conversational',
+              intent: result.value.intent
+            },
+            confidence: result.confidence,
+            consensus_method: result.method,
+            sources: result.sources,
+            timestamp: result.timestamp,
+            execution_time_ms: executionTime
+          },
+          metadata: {
+            isConversational: true,
+            intent: result.value.intent,
+            raw_responses: result.rawResponses?.length || 0,
+            query_options: options
+          }
+        });
+      } else {
+        // Regular oracle response
+        res.json({
+          success: true,
+          data: {
+            query,
+            result: result.value,
+            confidence: result.confidence,
+            consensus_method: result.method,
+            sources: result.sources,
+            timestamp: result.timestamp,
+            execution_time_ms: executionTime
+          },
+          metadata: {
+            isConversational: false,
+            raw_responses: result.raw_responses?.length || 0,
+            query_options: options
+          }
+        });
+      }
 
     } catch (error: any) {
       console.error('❌ Oracle query API error:', error.message);

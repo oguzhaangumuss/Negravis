@@ -79,6 +79,11 @@ class BrokerService {
       await this.broker!.ledger.addLedger(amount);
       return "Funds added to ledger successfully";
     } catch (error: any) {
+      // If ledger already exists with balance, that's actually OK
+      if (error.message.includes('Ledger already exists')) {
+        console.log('✅ Ledger already exists with funds - continuing...');
+        return "Ledger already initialized with funds";
+      }
       throw new Error(`Failed to add funds to ledger: ${error.message}`);
     }
   }

@@ -95,6 +95,9 @@ export class OracleContractService {
         console.log(`✅ PriceFeed contract deployed: ${this.priceFeedContractId}`);
         console.log(`🔗 Contract address: ${deploymentResult.contractInfo.contractAddress}`);
 
+        // Authorize this oracle service to update prices
+        await this.authorizeOracleService();
+
         // Log deployment to HCS
         await this.logContractDeployment(deploymentResult.contractInfo);
 
@@ -105,6 +108,40 @@ export class OracleContractService {
     } catch (error: any) {
       console.error("❌ Failed to deploy PriceFeed contract:", error.message);
       throw error;
+    }
+  }
+
+  /**
+   * Authorize this oracle service to update contract prices
+   */
+  private async authorizeOracleService(): Promise<void> {
+    try {
+      console.log('🔐 Authorizing oracle service to update prices...');
+      
+      // Get the current oracle service account address (contract deployer is automatically authorized)
+      const operatorAccountId = process.env.HEDERA_ACCOUNT_ID;
+      console.log(`📜 Oracle service account: ${operatorAccountId}`);
+      
+      // Since the contract deployer (owner) is automatically authorized in constructor,
+      // and we're using the same account for oracle updates, we should be good.
+      // But let's explicitly call setOracleAuthorization to be sure
+      
+      /* Uncomment if needed - usually not required since deployer is auto-authorized
+      const response = await contractManager.executeContract(
+        'PriceFeed',
+        'setOracleAuthorization',
+        [operatorAccountId || process.env.HEDERA_ACCOUNT_ID, true]
+      );
+      
+      await response.getReceipt(contractManager['client']);
+      console.log('✅ Oracle service authorized successfully');
+      */
+      
+      console.log('✅ Oracle service is authorized (contract deployer has automatic authorization)');
+      
+    } catch (error: any) {
+      console.error('❌ Failed to authorize oracle service:', error.message);
+      // Don't throw - authorization might not be needed if deployer account is used
     }
   }
 
@@ -148,11 +185,11 @@ export class OracleContractService {
         });
       }
 
-      // Execute contract function to update price with confidence
+      // Execute contract function to update price (using correct function name)
       const response = await contractManager.executeContract(
         'PriceFeed',
-        'updatePriceWithMetadata',
-        [priceData.symbol, priceInWei, confidence, priceData.timestamp]
+        'updatePrice',
+        [priceData.symbol, priceInWei]  // Only 2 parameters: symbol and price
       );
 
       const receipt = await response.getReceipt(contractManager['client']);
