@@ -11,6 +11,7 @@ import accountRoutes from './routes/accountRoutes';
 import serviceRoutes from './routes/serviceRoutes';
 import contractRoutes from './routes/contractRoutes';
 import oracleRoutes from './routes/oracleRoutes';
+import hfsRoutes from './routes/hfsRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -40,6 +41,7 @@ app.use(`${apiPrefix}/account`, accountRoutes);
 app.use(`${apiPrefix}/services`, serviceRoutes);
 app.use(`${apiPrefix}/contracts`, contractRoutes);
 app.use(`${apiPrefix}/oracles`, oracleRoutes);
+app.use(`${apiPrefix}/hfs`, hfsRoutes);
 
 // Root route - serve the landing page
 app.get('/', (req: Request, res: Response) => {
@@ -65,6 +67,9 @@ app.get('/api/info', (req: Request, res: Response) => {
     endpoints: {
       account: `${apiPrefix}/account`,
       services: `${apiPrefix}/services`,
+      contracts: `${apiPrefix}/contracts`,
+      oracles: `${apiPrefix}/oracles`,
+      hfs: `${apiPrefix}/hfs`,
     }
   });
 });
