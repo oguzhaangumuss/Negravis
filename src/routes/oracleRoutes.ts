@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { oracleManager } from '../services/oracleManager';
+import { aiInferenceService } from '../services/aiInferenceService';
 
 const router = express.Router();
 
@@ -632,6 +633,383 @@ router.post('/select-best', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oracles/ai/fraud-detection:
+ *   post:
+ *     summary: Run AI-powered fraud detection on transaction data
+ *     tags: [AI Oracles]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - transactionData
+ *             properties:
+ *               transactionData:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                     description: Transaction ID
+ *                   amount:
+ *                     type: number
+ *                     description: Transaction amount
+ *                   gasPrice:
+ *                     type: number
+ *                     description: Gas price used
+ *                   gasLimit:
+ *                     type: number
+ *                     description: Gas limit set
+ *                   senderAge:
+ *                     type: number
+ *                     description: Sender account age in days
+ *                   dailyTxCount:
+ *                     type: number
+ *                     description: Daily transaction count
+ *                   avgAmount:
+ *                     type: number
+ *                     description: Average transaction amount
+ *                   recentTxCount:
+ *                     type: number
+ *                     description: Recent transaction count
+ *                   timeWindowHours:
+ *                     type: number
+ *                     description: Time window for velocity calculation
+ *     responses:
+ *       200:
+ *         description: Fraud detection result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     transactionId:
+ *                       type: string
+ *                     fraudProbability:
+ *                       type: number
+ *                     isFraud:
+ *                       type: boolean
+ *                     confidence:
+ *                       type: number
+ *                     features:
+ *                       type: object
+ *                     modelVersion:
+ *                       type: string
+ *                     timestamp:
+ *                       type: number
+ *                     executionTime:
+ *                       type: number
+ *       400:
+ *         description: Invalid transaction data
+ *       500:
+ *         description: AI inference error
+ */
+router.post('/ai/fraud-detection', async (req: Request, res: Response) => {
+  try {
+    const { transactionData } = req.body;
+    
+    if (!transactionData) {
+      return res.status(400).json({
+        success: false,
+        error: 'Transaction data is required'
+      });
+    }
+    
+    console.log(`🤖 API: Running fraud detection for transaction ${transactionData.id}`);
+    
+    const result = await aiInferenceService.runInference(transactionData);
+    
+    res.json({
+      success: true,
+      data: result,
+      metadata: {
+        modelType: 'fraud_detection_mlp',
+        version: result.modelVersion,
+        processingTime: result.executionTime,
+        timestamp: result.timestamp
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('❌ AI fraud detection API error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: Date.now()
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oracles/ai/batch-detection:
+ *   post:
+ *     summary: Run batch AI fraud detection on multiple transactions
+ *     tags: [AI Oracles]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - transactions
+ *             properties:
+ *               transactions:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     amount:
+ *                       type: number
+ *                     gasPrice:
+ *                       type: number
+ *                     gasLimit:
+ *                       type: number
+ *     responses:
+ *       200:
+ *         description: Batch fraud detection results
+ *       400:
+ *         description: Invalid batch data
+ *       500:
+ *         description: Batch processing error
+ */
+router.post('/ai/batch-detection', async (req: Request, res: Response) => {
+  try {
+    const { transactions } = req.body;
+    
+    if (!transactions || !Array.isArray(transactions)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Transactions array is required'
+      });
+    }
+    
+    console.log(`🔄 API: Running batch fraud detection for ${transactions.length} transactions`);
+    
+    const results = await aiInferenceService.runBatchInference(transactions);
+    
+    // Calculate summary statistics
+    const fraudCount = results.filter(r => r.isFraud).length;
+    const avgConfidence = results.reduce((sum, r) => sum + r.confidence, 0) / results.length;
+    const avgProbability = results.reduce((sum, r) => sum + r.fraudProbability, 0) / results.length;
+    
+    res.json({
+      success: true,
+      data: results,
+      summary: {
+        totalProcessed: results.length,
+        fraudDetected: fraudCount,
+        fraudRate: (fraudCount / results.length) * 100,
+        avgConfidence: avgConfidence * 100,
+        avgFraudProbability: avgProbability * 100
+      },
+      metadata: {
+        batchSize: transactions.length,
+        modelType: 'fraud_detection_mlp',
+        timestamp: Date.now()
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('❌ AI batch detection API error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: Date.now()
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oracles/ai/model-metrics:
+ *   get:
+ *     summary: Get AI model performance metrics and information
+ *     tags: [AI Oracles]
+ *     responses:
+ *       200:
+ *         description: AI model metrics and information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     metrics:
+ *                       type: object
+ *                       properties:
+ *                         accuracy:
+ *                           type: number
+ *                         precision:
+ *                           type: number
+ *                         recall:
+ *                           type: number
+ *                         f1Score:
+ *                           type: number
+ *                         inferenceTime:
+ *                           type: number
+ *                         memoryUsage:
+ *                           type: number
+ *                     contractInfo:
+ *                       type: object
+ *                       properties:
+ *                         contractId:
+ *                           type: string
+ *                         isInitialized:
+ *                           type: boolean
+ *                         modelVersion:
+ *                           type: string
+ *       500:
+ *         description: Error retrieving metrics
+ */
+router.get('/ai/model-metrics', async (req: Request, res: Response) => {
+  try {
+    console.log('📊 API: Getting AI model metrics');
+    
+    const [metrics, contractInfo] = await Promise.all([
+      aiInferenceService.getModelMetrics(),
+      aiInferenceService.getContractInfo()
+    ]);
+    
+    res.json({
+      success: true,
+      data: {
+        metrics: {
+          accuracy: `${(metrics.accuracy * 100).toFixed(2)}%`,
+          precision: `${(metrics.precision * 100).toFixed(2)}%`,
+          recall: `${(metrics.recall * 100).toFixed(2)}%`,
+          f1Score: `${(metrics.f1Score * 100).toFixed(2)}%`,
+          avgInferenceTime: `${metrics.inferenceTime.toFixed(3)}ms`,
+          memoryFootprint: `${metrics.memoryUsage} bytes`
+        },
+        contractInfo,
+        rawMetrics: metrics
+      },
+      metadata: {
+        timestamp: Date.now(),
+        modelType: 'fraud_detection_mlp',
+        evaluationSamples: 100
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('❌ AI model metrics API error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: Date.now()
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oracles/ai/initialize:
+ *   post:
+ *     summary: Initialize AI inference service and deploy smart contract
+ *     tags: [AI Oracles]
+ *     responses:
+ *       200:
+ *         description: AI service initialized successfully
+ *       500:
+ *         description: Initialization failed
+ */
+router.post('/ai/initialize', async (req: Request, res: Response) => {
+  try {
+    console.log('🚀 API: Initializing AI inference service');
+    
+    await aiInferenceService.initialize();
+    const contractInfo = aiInferenceService.getContractInfo();
+    
+    res.json({
+      success: true,
+      message: 'AI inference service initialized successfully',
+      data: contractInfo,
+      timestamp: Date.now()
+    });
+    
+  } catch (error: any) {
+    console.error('❌ AI initialization API error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: Date.now()
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oracles/ai/health:
+ *   get:
+ *     summary: Check AI inference service health status
+ *     tags: [AI Oracles]
+ *     responses:
+ *       200:
+ *         description: AI service health information
+ */
+router.get('/ai/health', async (req: Request, res: Response) => {
+  try {
+    const contractInfo = aiInferenceService.getContractInfo();
+    
+    // Test inference with dummy data
+    const testTransaction = {
+      id: 'health_check_tx',
+      amount: 100,
+      gasPrice: 20,
+      gasLimit: 21000,
+      senderAge: 365,
+      dailyTxCount: 5,
+      avgAmount: 150,
+      recentTxCount: 2,
+      timeWindowHours: 24
+    };
+    
+    const startTime = performance.now();
+    const testResult = await aiInferenceService.runInference(testTransaction);
+    const endTime = performance.now();
+    
+    res.json({
+      success: true,
+      data: {
+        status: 'healthy',
+        contractInfo,
+        testInference: {
+          transactionId: testResult.transactionId,
+          fraudProbability: `${(testResult.fraudProbability * 100).toFixed(2)}%`,
+          decision: testResult.isFraud ? 'FRAUD' : 'LEGITIMATE',
+          responseTime: `${(endTime - startTime).toFixed(2)}ms`
+        }
+      },
+      timestamp: Date.now()
+    });
+    
+  } catch (error: any) {
+    console.error('❌ AI health check API error:', error.message);
+    res.status(500).json({
+      success: false,
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: Date.now()
     });
   }
 });
