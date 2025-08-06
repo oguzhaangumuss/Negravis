@@ -21,6 +21,10 @@ export { ChatbotManager } from './chatbot/ChatbotManager';
 export { DiscordOracleBot } from './chatbot/DiscordOracleBot';
 export { ChatbotBase } from './chatbot/ChatbotBase';
 
+// API integration
+export { OracleAPIController } from './api/OracleAPIController';
+export { createOracleRoutes, createOracleAPIMiddleware } from './api/oracleRoutes';
+
 // Types and interfaces
 export * from '../../types/oracle';
 
