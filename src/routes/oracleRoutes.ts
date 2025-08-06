@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import { oracleManager } from '../services/oracleManager';
 import { aiInferenceService } from '../services/aiInferenceService';
+import { llmAnalyticsService } from '../services/llmAnalyticsService';
+import { dataPreparationService } from '../services/dataPreparationService';
 
 const router = express.Router();
 
@@ -1005,6 +1007,456 @@ router.get('/ai/health', async (req: Request, res: Response) => {
     
   } catch (error: any) {
     console.error('❌ AI health check API error:', error.message);
+    res.status(500).json({
+      success: false,
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: Date.now()
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oracles/llm/pattern-recognition:
+ *   post:
+ *     summary: Run LLM-powered pattern recognition analysis on network data
+ *     tags: [LLM Analytics]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               timeframeMinutes:
+ *                 type: number
+ *                 default: 60
+ *                 description: Analysis timeframe in minutes
+ *     responses:
+ *       200:
+ *         description: Pattern recognition analysis completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     analysisId:
+ *                       type: string
+ *                     analysisType:
+ *                       type: string
+ *                     insights:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     recommendations:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     confidence:
+ *                       type: number
+ *                     processingTime:
+ *                       type: number
+ *       500:
+ *         description: Analysis failed
+ */
+router.post('/llm/pattern-recognition', async (req: Request, res: Response) => {
+  try {
+    const { timeframeMinutes = 60 } = req.body;
+    
+    console.log(`🔍 API: Running LLM pattern recognition for ${timeframeMinutes} minutes`);
+    
+    const result = await llmAnalyticsService.runPatternRecognition(timeframeMinutes);
+    
+    res.json({
+      success: true,
+      data: result,
+      metadata: {
+        analysisType: 'pattern_recognition',
+        dataSource: 'hedera_network',
+        timestamp: Date.now()
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('❌ LLM pattern recognition API error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: Date.now()
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oracles/llm/anomaly-detection:
+ *   post:
+ *     summary: Run LLM-powered anomaly detection on network data
+ *     tags: [LLM Analytics]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               timeframeMinutes:
+ *                 type: number
+ *                 default: 60
+ *                 description: Analysis timeframe in minutes
+ *     responses:
+ *       200:
+ *         description: Anomaly detection analysis completed
+ *       500:
+ *         description: Analysis failed
+ */
+router.post('/llm/anomaly-detection', async (req: Request, res: Response) => {
+  try {
+    const { timeframeMinutes = 60 } = req.body;
+    
+    console.log(`🚨 API: Running LLM anomaly detection for ${timeframeMinutes} minutes`);
+    
+    const result = await llmAnalyticsService.runAnomalyDetection(timeframeMinutes);
+    
+    res.json({
+      success: true,
+      data: result,
+      metadata: {
+        analysisType: 'anomaly_detection',
+        dataSource: 'hedera_network',
+        timestamp: Date.now()
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('❌ LLM anomaly detection API error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: Date.now()
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oracles/llm/security-assessment:
+ *   post:
+ *     summary: Run LLM-powered security assessment on network data
+ *     tags: [LLM Analytics]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               timeframeMinutes:
+ *                 type: number
+ *                 default: 60
+ *                 description: Analysis timeframe in minutes
+ *     responses:
+ *       200:
+ *         description: Security assessment completed
+ *       500:
+ *         description: Assessment failed
+ */
+router.post('/llm/security-assessment', async (req: Request, res: Response) => {
+  try {
+    const { timeframeMinutes = 60 } = req.body;
+    
+    console.log(`🛡️ API: Running LLM security assessment for ${timeframeMinutes} minutes`);
+    
+    const result = await llmAnalyticsService.runSecurityAssessment(timeframeMinutes);
+    
+    res.json({
+      success: true,
+      data: result,
+      metadata: {
+        analysisType: 'security_assessment',
+        dataSource: 'hedera_network',
+        timestamp: Date.now()
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('❌ LLM security assessment API error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: Date.now()
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oracles/llm/custom-analysis:
+ *   post:
+ *     summary: Run custom LLM analysis with user-defined question
+ *     tags: [LLM Analytics]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - question
+ *             properties:
+ *               question:
+ *                 type: string
+ *                 description: Custom analysis question
+ *               timeframeMinutes:
+ *                 type: number
+ *                 default: 60
+ *                 description: Analysis timeframe in minutes
+ *     responses:
+ *       200:
+ *         description: Custom analysis completed
+ *       400:
+ *         description: Invalid question
+ *       500:
+ *         description: Analysis failed
+ */
+router.post('/llm/custom-analysis', async (req: Request, res: Response) => {
+  try {
+    const { question, timeframeMinutes = 60 } = req.body;
+    
+    if (!question || question.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Question is required for custom analysis'
+      });
+    }
+    
+    console.log(`💭 API: Running LLM custom analysis: "${question.substring(0, 50)}..."`);
+    
+    const result = await llmAnalyticsService.runCustomAnalysis(question, timeframeMinutes);
+    
+    res.json({
+      success: true,
+      data: result,
+      metadata: {
+        analysisType: 'custom_analysis',
+        question: question.substring(0, 100),
+        dataSource: 'hedera_network',
+        timestamp: Date.now()
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('❌ LLM custom analysis API error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: Date.now()
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oracles/llm/insights-summary:
+ *   get:
+ *     summary: Get summary of recent LLM analytics insights
+ *     tags: [LLM Analytics]
+ *     responses:
+ *       200:
+ *         description: Recent insights summary
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalAnalyses:
+ *                       type: number
+ *                     latestAnalysis:
+ *                       type: object
+ *                     topInsights:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     commonRecommendations:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     averageConfidence:
+ *                       type: number
+ */
+router.get('/llm/insights-summary', async (req: Request, res: Response) => {
+  try {
+    console.log('📊 API: Getting LLM insights summary');
+    
+    const summary = llmAnalyticsService.getRecentInsightsSummary();
+    const serviceStatus = llmAnalyticsService.getServiceStatus();
+    const bufferStats = dataPreparationService.getBufferStats();
+    
+    res.json({
+      success: true,
+      data: {
+        ...summary,
+        serviceStatus,
+        dataBuffer: bufferStats
+      },
+      metadata: {
+        timestamp: Date.now(),
+        serviceInitialized: serviceStatus.isInitialized
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('❌ LLM insights summary API error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: Date.now()
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oracles/llm/analysis-history:
+ *   get:
+ *     summary: Get history of LLM analyses
+ *     tags: [LLM Analytics]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: number
+ *           default: 20
+ *         description: Number of analyses to return
+ *     responses:
+ *       200:
+ *         description: Analysis history retrieved
+ */
+router.get('/llm/analysis-history', async (req: Request, res: Response) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 20;
+    
+    console.log(`📋 API: Getting LLM analysis history (limit: ${limit})`);
+    
+    const history = llmAnalyticsService.getAnalysisHistory(limit);
+    
+    res.json({
+      success: true,
+      data: {
+        analyses: history,
+        totalCount: history.length
+      },
+      metadata: {
+        limit,
+        timestamp: Date.now()
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('❌ LLM analysis history API error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: Date.now()
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oracles/llm/initialize:
+ *   post:
+ *     summary: Initialize LLM analytics service
+ *     tags: [LLM Analytics]
+ *     responses:
+ *       200:
+ *         description: LLM service initialized successfully
+ *       500:
+ *         description: Initialization failed
+ */
+router.post('/llm/initialize', async (req: Request, res: Response) => {
+  try {
+    console.log('🚀 API: Initializing LLM analytics service');
+    
+    await llmAnalyticsService.initialize();
+    const serviceStatus = llmAnalyticsService.getServiceStatus();
+    
+    res.json({
+      success: true,
+      message: 'LLM analytics service initialized successfully',
+      data: serviceStatus,
+      timestamp: Date.now()
+    });
+    
+  } catch (error: any) {
+    console.error('❌ LLM initialization API error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: Date.now()
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oracles/llm/health:
+ *   get:
+ *     summary: Check LLM analytics service health
+ *     tags: [LLM Analytics]
+ *     responses:
+ *       200:
+ *         description: LLM service health information
+ */
+router.get('/llm/health', async (req: Request, res: Response) => {
+  try {
+    const serviceStatus = llmAnalyticsService.getServiceStatus();
+    const bufferStats = dataPreparationService.getBufferStats();
+    
+    // Test with sample data if buffer is empty
+    if (bufferStats.totalEntries === 0) {
+      // Add some sample data
+      const sampleData = {
+        timestamp: Date.now(),
+        dataType: 'oracle_query' as const,
+        summary: 'Health check oracle query',
+        details: {
+          id: 'health_check',
+          source: 'health_monitor',
+          metadata: { test: true },
+          rawData: { symbol: 'BTC', price: 45000 }
+        },
+        metrics: {
+          volume: 1,
+          frequency: 0.1,
+          significance: 0.5
+        }
+      };
+      
+      dataPreparationService.addToBuffer(sampleData);
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        status: serviceStatus.isInitialized ? 'healthy' : 'not_initialized',
+        serviceStatus,
+        dataBuffer: dataPreparationService.getBufferStats(),
+        testContext: dataPreparationService.createAnalyticsContext(60)
+      },
+      timestamp: Date.now()
+    });
+    
+  } catch (error: any) {
+    console.error('❌ LLM health check API error:', error.message);
     res.status(500).json({
       success: false,
       status: 'unhealthy',
