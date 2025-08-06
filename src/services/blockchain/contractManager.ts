@@ -12,7 +12,7 @@ import {
   TransactionResponse,
   TransactionReceipt
 } from "@hashgraph/sdk";
-import * as solc from "solc";
+const solc = require("solc");
 import * as fs from "fs";
 import * as path from "path";
 import dotenv from "dotenv";
