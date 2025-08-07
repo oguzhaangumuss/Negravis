@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import cors from 'cors';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swagger';
@@ -22,7 +23,32 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4001;
 
-// Apply basic middleware
+// Apply basic middleware with explicit CORS configuration
+const getAllowedOrigins = () => {
+  if (process.env.NODE_ENV === 'production') {
+    const productionUrls = [
+      'https://negravis-frontend.vercel.app',
+      'https://negravis-frontend-git-main-oguzhangumus.vercel.app',
+      'https://negravis-frontend-oguzhangumus.vercel.app',
+      'https://negravis-app.vercel.app'
+    ];
+    if (process.env.FRONTEND_URL) {
+      productionUrls.push(...process.env.FRONTEND_URL.split(',').map(url => url.trim()));
+    }
+    return productionUrls;
+  }
+  return true; // Allow all origins in development
+};
+
+const corsOptions = {
+  origin: getAllowedOrigins(),
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'x-api-key', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Serve static files from public directory
