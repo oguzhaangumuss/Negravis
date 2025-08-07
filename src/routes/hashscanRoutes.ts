@@ -98,7 +98,9 @@ router.get('/transaction/:id', async (req: Request, res: Response) => {
         throw new Error(`Transaction not found: ${id}`);
       }
       
-      const transactionData: any = await response.json();
+      const responseData: any = await response.json();
+      // Mirror Node API returns an array of transactions
+      const transactionData = responseData.transactions ? responseData.transactions[0] : responseData;
       
       // If it's a CONSENSUSSUBMITMESSAGE, try to get HCS data
       let hcsData = null;
