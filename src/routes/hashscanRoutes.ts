@@ -40,6 +40,19 @@ router.get('/transaction/:id', async (req: Request, res: Response) => {
             hcsData = { transaction_id: id };
           }
           
+          // Parse Oracle query result from HCS data
+          let oracleData = null;
+          if (hcsData && typeof hcsData === 'object') {
+            oracleData = {
+              query: hcsData.query || hcsData.query_info?.query || 'Unknown',
+              answer: hcsData.query_info?.answer || hcsData.data?.value?.toString() || 'N/A',
+              confidence: hcsData.data?.confidence || 1,
+              sources: hcsData.data?.sources || [],
+              method: hcsData.data?.method || 'unknown',
+              provider: hcsData.data?.sources?.[0] || 'unknown'
+            };
+          }
+
           res.json({
             success: true,
             transaction: {
@@ -55,7 +68,8 @@ router.get('/transaction/:id', async (req: Request, res: Response) => {
               },
               blockchain_hash: hcsMessage.transactionId || id,
               explorer_url: `https://hashscan.io/testnet/transaction/${id}`,
-              source: 'HCS_REAL_TIME'
+              source: 'HCS_REAL_TIME',
+              oracle_data: oracleData
             },
             hashscan_url: `https://hashscan.io/testnet/transaction/${encodeURIComponent(id)}`
           });
