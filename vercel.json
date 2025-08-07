@@ -1,26 +1,27 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
   "builds": [
     {
-      "src": "package.json",
+      "src": "src/index.ts",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "dist/index.js"
+      "dest": "src/index.ts"
     },
     {
       "src": "/(.*)",
-      "dest": "dist/index.js"
+      "dest": "src/index.ts"
     }
   ],
   "env": {
     "NODE_ENV": "production"
   },
   "functions": {
-    "dist/index.js": {
+    "src/index.ts": {
       "maxDuration": 30
     }
   }
