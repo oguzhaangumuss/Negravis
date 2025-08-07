@@ -17,7 +17,7 @@ export class HederaOracleLogger {
   private client!: Client;
   private topicId: TopicId | null = null;
   private isInitialized = false;
-  private batchSize: number = 10;
+  private batchSize: number = 1; // Individual transactions for immediate transaction IDs
   private batch: HCSLogEntry[] = [];
   private batchTimeout: NodeJS.Timeout | null = null;
 
@@ -101,15 +101,20 @@ export class HederaOracleLogger {
       throw new Error('HCS Logger not initialized. Call createTopic() or provide topicId in constructor');
     }
 
+    // Create log entry with smart size management
     const logEntry: HCSLogEntry = {
       query_id: query.id,
       query: query.query,
       result: {
         ...result,
+        // Only keep essential raw_responses data to reduce size
         raw_responses: result.raw_responses?.map(r => ({
           ...r,
-          // Remove large metadata to reduce message size
-          metadata: r.metadata ? { latency: r.metadata.latency } : undefined
+          // Keep essential data but remove huge metadata
+          metadata: r.metadata ? {
+            latency: r.metadata.latency,
+            confidence: r.metadata.confidence
+          } : undefined
         })) || []
       },
       hcs_timestamp: new Date().toISOString(),
@@ -135,12 +140,47 @@ export class HederaOracleLogger {
    */
   private async submitSingleLog(logEntry: HCSLogEntry): Promise<string> {
     const messageData = JSON.stringify(logEntry);
+    const messageSize = Buffer.byteLength(messageData, 'utf8');
+    
+    console.log(`📊 HCS message size: ${messageSize} bytes`);
     
     // HCS message size limit is 1024 bytes
-    if (Buffer.byteLength(messageData, 'utf8') > 1024) {
-      throw new Error('Log entry too large for HCS message (max 1024 bytes)');
+    if (messageSize > 1024) {
+      console.warn(`⚠️ Message too large (${messageSize} bytes), trying to reduce size...`);
+      
+      // Try to reduce size by removing some data
+      const reducedEntry = {
+        query_id: logEntry.query_id,
+        query: logEntry.query,
+        result: {
+          value: logEntry.result.value,
+          confidence: logEntry.result.confidence,
+          method: logEntry.result.method,
+          sources: logEntry.result.sources?.slice(0, 3), // Limit sources
+          timestamp: logEntry.result.timestamp
+        },
+        hcs_timestamp: logEntry.hcs_timestamp,
+        transaction_id: ''
+      };
+      
+      const reducedData = JSON.stringify(reducedEntry);
+      const reducedSize = Buffer.byteLength(reducedData, 'utf8');
+      
+      if (reducedSize > 1024) {
+        throw new Error(`Log entry too large for HCS message even after reduction (${reducedSize} bytes, max 1024 bytes)`);
+      }
+      
+      console.log(`✅ Reduced message size from ${messageSize} to ${reducedSize} bytes`);
+      return this.sendMessage(reducedData, reducedEntry);
     }
 
+    return this.sendMessage(messageData, logEntry);
+  }
+
+  /**
+   * Send message to HCS
+   */
+  private async sendMessage(messageData: string, logEntry: any): Promise<string> {
     const transaction = new TopicMessageSubmitTransaction()
       .setTopicId(this.topicId!)
       .setMessage(messageData);
@@ -155,7 +195,7 @@ export class HederaOracleLogger {
     const transactionId = response.transactionId.toString();
     logEntry.transaction_id = transactionId;
 
-    console.log(`Oracle result logged to HCS: ${transactionId}`);
+    console.log(`✅ Oracle result logged to HCS: ${transactionId}`);
     return transactionId;
   }
 

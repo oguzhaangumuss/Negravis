@@ -21,7 +21,7 @@ import {
   LicenseData
 } from '../../interfaces/HFSLicenseManager';
 // import { hcsService } from '../hcsService'; // Will add HCS integration later
-import { mockDMVProvider } from './identityProviders/mockDMVProvider';
+// REMOVED: Mock DMV Provider - only real identity verification allowed!
 
 /**
  * Hedera File Service License Manager
@@ -84,21 +84,13 @@ export class HFSLicenseManager implements IHFSLicenseManager {
       // Generate document hash
       const licenseHash = await this.generateDocumentHash(request.documentBuffer);
       
-      // Verify with identity provider (for driver's licenses)
-      let verificationConfidence = 0.8; // Default confidence
+      // Real identity verification required - no mock providers!
       if (request.licenseData.documentType === 'drivers_license') {
-        try {
-          const dmvVerification = await mockDMVProvider.verifyDocument(request.licenseData);
-          verificationConfidence = dmvVerification.confidence;
-          
-          if (!dmvVerification.verified) {
-            console.log(`⚠️ DMV verification failed: ${dmvVerification.details}`);
-            // Continue storing but mark as unverified
-          }
-        } catch (error) {
-          console.log('⚠️ DMV verification service unavailable, proceeding with default confidence');
-        }
+        throw new Error('Real DMV verification service required! Mock verification providers removed.');
       }
+      
+      // For non-DMV documents, require manual verification
+      let verificationConfidence = 0.0; // No automatic verification without real providers
       
       // Create file on HFS (or mock it)
       let fileId: string;

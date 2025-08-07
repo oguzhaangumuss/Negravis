@@ -82,7 +82,7 @@ router.post('/test-message', async (req, res) => {
       requestId: `api-test-${Date.now()}`,
       endpoint: '/api/hcs/test-message',
       method: 'POST',
-      responseTime: Math.random() * 100,
+      responseTime: Date.now(), // Real timestamp - no random data!
       statusCode: 200,
       memoryUsage: process.memoryUsage(),
       userAgent: req.headers['user-agent'] || 'Unknown'

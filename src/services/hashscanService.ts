@@ -58,32 +58,53 @@ export class HashScanService {
   }
 
   /**
-   * Get transaction status and details
+   * Get transaction status and details from Hedera Mirror Node
    */
   async getTransactionDetails(transactionId: string): Promise<TransactionDetails> {
-    // Note: This would typically make an API call to HashScan or Hedera Mirror Node
-    // For now, we'll return a mock response with proper structure
-    
-    return {
-      transactionId,
-      status: 'success', // Would be determined from actual API response
-      timestamp: new Date().toISOString(),
-      fee: '0.0001 ℏ',
-      result: 'SUCCESS',
-      explorerUrl: this.generateExplorerUrl('transaction', transactionId)
-    };
+    try {
+      const response = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/transactions/${transactionId}`);
+      if (!response.ok) {
+        throw new Error(`Transaction not found: ${transactionId}`);
+      }
+      
+      const data: any = await response.json();
+      
+      return {
+        transactionId: data.transaction_id || transactionId,
+        status: data.result === 'SUCCESS' ? 'success' : 'failed',
+        timestamp: data.consensus_timestamp ? new Date(parseFloat(data.consensus_timestamp) * 1000).toISOString() : new Date().toISOString(),
+        fee: `${(data.charged_tx_fee / 100000000).toFixed(4)} ℏ`,
+        result: data.result || 'UNKNOWN',
+        explorerUrl: this.generateExplorerUrl('transaction', transactionId)
+      };
+    } catch (error) {
+      throw new Error(`Failed to fetch transaction details: ${error}`);
+    }
   }
 
   /**
-   * Get account information
+   * Get account information from Hedera Mirror Node
    */
   async getAccountDetails(accountId: string): Promise<AccountDetails> {
-    return {
-      accountId,
-      balance: '1000.5 ℏ', // Would come from actual API
-      transactions: 150,    // Would come from actual API
-      explorerUrl: this.generateExplorerUrl('account', accountId)
-    };
+    try {
+      const balanceResponse = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/balances?account.id=${accountId}`);
+      const transactionsResponse = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/transactions?account.id=${accountId}&limit=1`);
+      
+      const balanceData: any = balanceResponse.ok ? await balanceResponse.json() : null;
+      const transactionsData: any = transactionsResponse.ok ? await transactionsResponse.json() : null;
+      
+      const balance = balanceData?.balances?.[0]?.balance || 0;
+      const transactionCount = transactionsData?.links?.next ? 100 : 0; // Estimate based on API response
+      
+      return {
+        accountId,
+        balance: `${(balance / 100000000).toFixed(4)} ℏ`,
+        transactions: transactionCount,
+        explorerUrl: this.generateExplorerUrl('account', accountId)
+      };
+    } catch (error) {
+      throw new Error(`Failed to fetch account details: ${error}`);
+    }
   }
 
   /**

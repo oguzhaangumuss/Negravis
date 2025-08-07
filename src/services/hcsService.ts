@@ -74,18 +74,71 @@ export class HCSService {
         // Set operator with private key - handle different formats
         let privateKey: PrivateKey;
         
+        // Clean the key string first
+        let cleanKey = operatorKey.trim();
+        
         try {
-          // Try hex format first (0x...)
-          if (operatorKey.startsWith('0x')) {
-            privateKey = PrivateKey.fromStringECDSA(operatorKey);
-          } else {
-            // Try DER format
-            privateKey = PrivateKey.fromString(operatorKey);
+          // Handle ECDSA hex format (0x prefix)
+          if (cleanKey.startsWith('0x')) {
+            // Remove 0x prefix for ECDSA parsing
+            const hexKey = cleanKey.slice(2);
+            console.log(`🔧 Parsing ECDSA key (removed 0x prefix), length: ${hexKey.length}`);
+            privateKey = PrivateKey.fromStringECDSA(hexKey);
+          } 
+          // Handle potential hex format without 0x (64 chars = ECDSA)
+          else if (cleanKey.length === 64 && /^[0-9a-fA-F]+$/.test(cleanKey)) {
+            console.log(`🔧 Parsing ECDSA key (64 char hex), length: ${cleanKey.length}`);
+            privateKey = PrivateKey.fromStringECDSA(cleanKey);
+          }
+          // Handle DER format (starts with 30 and longer than 64 chars)
+          else if (cleanKey.length > 64) {
+            console.log(`🔧 Parsing DER format key, length: ${cleanKey.length}`);
+            try {
+              // Try ED25519 DER format first (most common in Hedera)
+              privateKey = PrivateKey.fromStringED25519(cleanKey);
+            } catch (ed25519Error) {
+              // Fall back to ECDSA DER format
+              privateKey = PrivateKey.fromStringECDSA(cleanKey);
+            }
+          }
+          // Default fallback to general parsing
+          else {
+            console.log(`🔧 Using general private key parsing, length: ${cleanKey.length}`);
+            privateKey = PrivateKey.fromString(cleanKey);
           }
         } catch (keyParseError: any) {
           console.log(`⚠️ Key parse error: ${keyParseError.message}`);
-          // Try alternative parsing
-          privateKey = PrivateKey.fromStringECDSA(operatorKey);
+          console.log(`🔧 Trying fallback parsing strategies...`);
+          
+          // Fallback strategy 1: Try without 0x prefix if present
+          if (cleanKey.startsWith('0x')) {
+            const hexKey = cleanKey.slice(2);
+            try {
+              privateKey = PrivateKey.fromStringECDSA(hexKey);
+              console.log(`✅ Fallback 1 successful: ECDSA without 0x prefix`);
+            } catch (fallback1Error) {
+              // Fallback strategy 2: Try general parsing
+              try {
+                privateKey = PrivateKey.fromString(cleanKey);
+                console.log(`✅ Fallback 2 successful: General parsing`);
+              } catch (fallback2Error) {
+                console.error(`❌ All key parsing strategies failed:`);
+                console.error(`Original error: ${keyParseError.message}`);
+                console.error(`Fallback 1 error: ${fallback1Error instanceof Error ? fallback1Error.message : String(fallback1Error)}`);
+                console.error(`Fallback 2 error: ${fallback2Error instanceof Error ? fallback2Error.message : String(fallback2Error)}`);
+                throw new Error(`Failed to parse private key: ${keyParseError.message}`);
+              }
+            }
+          } else {
+            // Try ECDSA parsing as last resort
+            try {
+              privateKey = PrivateKey.fromStringECDSA(cleanKey);
+              console.log(`✅ Fallback ECDSA parsing successful`);
+            } catch (finalError) {
+              console.error(`❌ Final key parsing attempt failed: ${finalError instanceof Error ? finalError.message : String(finalError)}`);
+              throw new Error(`Failed to parse private key with all strategies: ${keyParseError.message}`);
+            }
+          }
         }
         
         const accountId = operatorId ? AccountId.fromString(operatorId) : privateKey.publicKey.toAccountId(0, 0);
@@ -106,7 +159,7 @@ export class HCSService {
         this.isInitialized = true;
         console.log("✅ Hedera Consensus Service initialized successfully");
       } catch (credentialError) {
-        console.error(`❌ Failed to initialize with credentials: ${credentialError.message}`);
+        console.error(`❌ Failed to initialize with credentials: ${credentialError instanceof Error ? credentialError.message : String(credentialError)}`);
         throw credentialError;
       }
 

@@ -109,8 +109,7 @@ export class OracleManager {
     if (accountId && privateKey) {
       this.hederaLogger = new HederaOracleLogger(accountId, privateKey, 'testnet', topicId);
     } else {
-      console.warn('⚠️ Hedera credentials not found, using mock blockchain logging');
-      this.hederaLogger = null as any;
+      throw new Error('Hedera credentials required! Set HEDERA_ACCOUNT_ID and HEDERA_PRIVATE_KEY environment variables.');
     }
     
     this.conversationalAI = new ConversationalAIService();
@@ -138,8 +137,8 @@ export class OracleManager {
           }
           console.log('✅ Hedera blockchain logging initialized');
         } catch (error) {
-          console.warn('⚠️ Hedera initialization failed, falling back to mock:', error);
-          this.hederaLogger = null as any;
+          console.error('❌ Hedera initialization failed:', error);
+          throw new Error(`Hedera initialization failed: ${error}`);
         }
       }
       
@@ -312,28 +311,16 @@ Response:`;
           timestamp: new Date().toISOString()
         };
       } else {
-        // Fallback to mock if Hedera not available
-        console.log('📝 Using mock blockchain logging (Hedera not available)');
-        const transactionId = `mock_${Math.random().toString(16).substring(2, 18)}`;
-        
-        return {
-          queryId,
-          transactionId,
-          explorerUrl: `https://hashscan.io/testnet/transaction/${transactionId}`,
-          timestamp: new Date().toISOString()
-        };
+        // No Hedera logger available - fail with error
+        throw new Error('Hedera blockchain logging not initialized. Cannot process oracle query without blockchain verification.');
       }
     } catch (error: any) {
-      console.warn('⚠️ Blockchain logging failed, using fallback:', error);
+      console.error('❌ Blockchain logging failed:', error);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error stack:', error.stack);
       
-      // Return fallback record with mock transaction ID for testing
-      const mockTransactionId = `0.0.6496308@${Date.now()}.${Math.floor(Math.random() * 1000000)}`;
-      return {
-        queryId,
-        transactionId: mockTransactionId,
-        explorerUrl: `https://hashscan.io/testnet/transaction/${encodeURIComponent(mockTransactionId)}`,
-        timestamp: new Date().toISOString()
-      };
+      // No fallback - throw the error so system fails properly
+      throw new Error(`Failed to log oracle result to blockchain: ${error.message}`);
     }
   }
 
@@ -416,7 +403,7 @@ Response:`;
       total_oracles: stats.total_providers,
       healthy_oracles: stats.active_providers,
       system_health: stats.system_health,
-      blockchain_status: this.hederaLogger ? 'hedera_connected' : 'mock_fallback',
+      blockchain_status: this.hederaLogger ? 'hedera_connected' : 'disconnected',
       last_updated: new Date().toISOString()
     };
   }

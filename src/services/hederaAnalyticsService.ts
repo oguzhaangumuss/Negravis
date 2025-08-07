@@ -460,12 +460,8 @@ export class HederaAnalyticsService {
         }
       });
 
-      // Since most accounts have null created_timestamp, provide demo data
-      if (newAccountsToday === 0 && newAccountsThisWeek === 0 && newAccountsThisMonth === 0) {
-        newAccountsToday = Math.floor(Math.random() * 50) + 10;
-        newAccountsThisWeek = newAccountsToday * 7 + Math.floor(Math.random() * 100);
-        newAccountsThisMonth = newAccountsThisWeek * 4 + Math.floor(Math.random() * 500);
-      }
+      // If no account creation data available, return 0 - no fake data
+      // Real accounts will show actual creation timestamps when available
 
       const growthRate = (newAccountsThisMonth / 30) * 0.1; // Daily growth rate
 
@@ -655,18 +651,7 @@ export class HederaAnalyticsService {
       }
     });
 
-    // Add demo timeline data if no real data
-    if (Object.keys(timeline).length === 0) {
-      const today = new Date();
-      for (let i = 29; i >= 0; i--) {
-        const date = new Date(today.getTime() - (i * 24 * 60 * 60 * 1000));
-        const dateStr = date.toISOString().split('T')[0];
-        timeline[dateStr] = {
-          newAccounts: Math.floor(Math.random() * 20) + 5,
-          totalAccounts: 0
-        };
-      }
-    }
+    // Return empty timeline if no real data available - no fake data generation
 
     return Object.entries(timeline)
       .sort(([a], [b]) => a.localeCompare(b))

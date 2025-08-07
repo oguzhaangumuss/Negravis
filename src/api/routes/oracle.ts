@@ -526,34 +526,7 @@ router.post('/bulk-query', async (req, res) => {
   }
 });
 
-/**
- * GET /api/oracle/blockchain/:hash
- * Verify blockchain transaction
- */
-router.get('/blockchain/:hash', async (req, res) => {
-  try {
-    const { hash } = req.params;
-    
-    // For now, return mock verification data
-    // In production, this would verify the hash on Hedera network
-    const verification = {
-      transaction_id: hash,
-      status: hash.startsWith('0x') ? 'verified' : 'invalid',
-      timestamp: new Date().toISOString(),
-      explorer_url: `https://hashscan.io/testnet/transaction/${hash}`,
-      network: 'hedera-testnet'
-    };
-    
-    res.json({
-      success: true,
-      data: verification
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
+// REMOVED: Mock blockchain verification endpoint
+// Use Hedera Mirror Node API or real blockchain verification only!
 
 export default router;

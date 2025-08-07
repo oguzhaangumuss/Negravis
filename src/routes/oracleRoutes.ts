@@ -30,73 +30,23 @@ const router = express.Router();
 router.get('/price/:symbol', async (req: Request, res: Response) => {
   try {
     const { symbol } = req.params;
-    console.log(`📊 API: Getting aggregated price for ${symbol}`);
+    console.log(`📊 API: Getting aggregated price for ${symbol} (DEPRECATED - Use /api/oracle-manager/query)`);
+    console.warn('⚠️ This endpoint is deprecated. Use the enhanced Oracle Manager API instead.');
 
-    const aggregatedData = await oracleManager.getAggregatedPrice(symbol);
-    
-    // Create blockchain verification data
-    const transactionId = `0.0.6496308@${Date.now()}.${Math.floor(Math.random() * 1000000)}`;
-    const queryId = `${symbol.toLowerCase()}-price-${new Date().toISOString().slice(0, 19).replace(/[:-]/g, '')}`;
-    
-    res.json({
-      success: true,
-      data: aggregatedData.value,
-      metadata: {
-        sources: aggregatedData.sources,
-        confidence: aggregatedData.confidence,
-        method: aggregatedData.method,
-        timestamp: aggregatedData.timestamp,
-        providersUsed: aggregatedData.sources.length
-      },
-      blockchain: {
-        transaction_id: transactionId,
-        explorer_link: `https://hashscan.io/testnet/transaction/${encodeURIComponent(transactionId)}`,
-        hash: `0x${Buffer.from(transactionId).toString('hex').slice(0, 64).padEnd(64, '0')}`,
-        network: 'hedera-testnet',
-        verified: true,
-        query_details: `http://localhost:4001/hashscan?type=query&id=${encodeURIComponent(queryId)}`
-      },
-      // Enhanced response with better source formatting
-      query_info: {
-        symbol: symbol.toUpperCase(),
-        query: `${symbol} price`,
-        answer: `$${(aggregatedData.value.price || aggregatedData.value).toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        })}`,
-        sources: aggregatedData.raw_responses?.map((resp: any) => {
-          const providerName = resp?.source || resp?.provider || 'Unknown';
-          return {
-            name: providerName === 'chainlink' ? 'Chainlink' : 
-                  providerName === 'coingecko' ? 'CoinGecko' :
-                  providerName === 'dia' ? 'DIA Oracle' : providerName,
-            url: providerName === 'chainlink' ? 'https://chain.link/' :
-                 providerName === 'coingecko' ? 'https://coingecko.com/' :
-                 providerName === 'dia' ? 'https://diadata.org/' : '#',
-            type: providerName === 'chainlink' ? 'blockchain' : 'api',
-            weight: 95,
-            confidence: Math.round((resp?.confidence || 0.95) * 100)
-          };
-        }) || aggregatedData.sources?.map((source: string) => ({
-          name: source === 'chainlink' ? 'Chainlink' : 
-                source === 'coingecko' ? 'CoinGecko' :
-                source === 'dia' ? 'DIA Oracle' : source,
-          url: source === 'chainlink' ? 'https://chain.link/' :
-               source === 'coingecko' ? 'https://coingecko.com/' :
-               source === 'dia' ? 'https://diadata.org/' : '#',
-          type: source === 'chainlink' ? 'blockchain' : 'api',
-          weight: 95,
-          confidence: 95
-        })) || [],
-        consensus: {
-          method: aggregatedData.method,
-          confidence_score: Math.round(aggregatedData.confidence * 100),
-          provider_count: aggregatedData.sources.length,
-          execution_time_ms: aggregatedData.executionTimeMs || 2000
+    // DEPRECATED ROUTE - No mock data allowed!
+    res.status(410).json({
+      success: false,
+      error: `This endpoint is deprecated. Use /api/oracle-manager/query for real blockchain-verified ${symbol} price queries.`,
+      deprecated: true,
+      redirect: {
+        method: 'POST',
+        url: '/api/oracle-manager/query',
+        body: {
+          provider: 'coingecko',
+          query: `${symbol} price`,
+          userId: 'api-user'
         }
-      },
-      // Frontend hashscan redirect
-      hashscan_url: `http://localhost:3000/hashscan?type=query&id=${encodeURIComponent(queryId)}`
+      }
     });
 
   } catch (error: any) {
