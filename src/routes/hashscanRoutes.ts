@@ -69,7 +69,11 @@ router.get('/transaction/:id', async (req: Request, res: Response) => {
     // Fallback to Mirror Node API
     try {
       console.log(`🔍 Fallback to Mirror Node API for transaction: ${id}`);
-      const response = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/transactions/${id}`);
+      // Convert transaction ID format for Mirror Node API
+      // From: 0.0.6496308@1754597024.146772782
+      // To: 0.0.6496308-1754597024-146772782  
+      const mirrorNodeId = id.replace('@', '-').replace(/\.(\d+)$/, '-$1');
+      const response = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/transactions/${mirrorNodeId}`);
       if (!response.ok) {
         throw new Error(`Transaction not found: ${id}`);
       }
@@ -168,7 +172,9 @@ router.get('/verify/:hash', async (req: Request, res: Response) => {
     
     // Verify hash using real Hedera Mirror Node API
     try {
-      const response = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/transactions/${hash}`);
+      // Convert hash format for Mirror Node API if needed
+      const mirrorNodeHash = hash.includes('@') ? hash.replace('@', '-').replace(/\.(\d+)$/, '-$1') : hash;
+      const response = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/transactions/${mirrorNodeHash}`);
       if (!response.ok) {
         throw new Error(`Hash verification failed: ${hash}`);
       }
@@ -249,7 +255,9 @@ router.get('/search/:query', async (req: Request, res: Response) => {
     // Search transaction IDs (format: account@timestamp)
     if (query.includes('@')) {
       try {
-        const transactionUrl = `https://testnet.mirrornode.hedera.com/api/v1/transactions/${query}`;
+        // Convert transaction ID format for Mirror Node API
+        const mirrorNodeQuery = query.replace('@', '-').replace(/\.(\d+)$/, '-$1');
+        const transactionUrl = `https://testnet.mirrornode.hedera.com/api/v1/transactions/${mirrorNodeQuery}`;
         const response = await fetch(transactionUrl);
         if (response.ok) {
           const txData: any = await response.json();
