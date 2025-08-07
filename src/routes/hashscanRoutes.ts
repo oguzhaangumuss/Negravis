@@ -43,13 +43,19 @@ router.get('/transaction/:id', async (req: Request, res: Response) => {
           // Parse Oracle query result from HCS data
           let oracleData = null;
           if (hcsData && typeof hcsData === 'object') {
+            // Handle different HCS data structures
+            const result = hcsData.result || hcsData.data || {};
+            const queryInfo = hcsData.query_info || {};
+            
             oracleData = {
-              query: hcsData.query || hcsData.query_info?.query || 'Unknown',
-              answer: hcsData.query_info?.answer || hcsData.data?.value?.toString() || 'N/A',
-              confidence: hcsData.data?.confidence || 1,
-              sources: hcsData.data?.sources || [],
-              method: hcsData.data?.method || 'unknown',
-              provider: hcsData.data?.sources?.[0] || 'unknown'
+              query: hcsData.query || queryInfo.query || 'Unknown',
+              answer: queryInfo.answer || `$${result.value?.toLocaleString()}` || result.value?.toString() || 'N/A',
+              value: result.value || 0,
+              confidence: result.confidence || 1,
+              sources: result.sources || [],
+              method: result.method || 'median',
+              provider: (result.sources && result.sources[0]) || 'unknown',
+              raw_responses: result.raw_responses || []
             };
           }
 
@@ -94,6 +100,46 @@ router.get('/transaction/:id', async (req: Request, res: Response) => {
       
       const transactionData: any = await response.json();
       
+      // If it's a CONSENSUSSUBMITMESSAGE, try to get HCS data
+      let hcsData = null;
+      if (transactionData.name === 'CONSENSUSSUBMITMESSAGE' && transactionData.entity_id) {
+        try {
+          // Try to get HCS topic message using consensus timestamp
+          const topicResponse = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/topics/${transactionData.entity_id}/messages?timestamp=${transactionData.consensus_timestamp}&limit=1`);
+          if (topicResponse.ok) {
+            const topicData: any = await topicResponse.json();
+            if (topicData.messages && topicData.messages.length > 0) {
+              const messageContent = Buffer.from(topicData.messages[0].message, 'base64').toString();
+              try {
+                hcsData = JSON.parse(messageContent);
+                console.log('✅ Successfully parsed HCS Oracle data:', JSON.stringify(hcsData, null, 2));
+              } catch {
+                hcsData = { raw_message: messageContent };
+              }
+            }
+          }
+        } catch (error) {
+          console.log('⚠️ Could not fetch HCS message content:', error);
+        }
+      }
+
+      // Parse Oracle data from HCS data for frontend
+      let oracleData = null;
+      if (hcsData && typeof hcsData === 'object') {
+        const result = hcsData.result || {};
+        
+        oracleData = {
+          query: hcsData.query || 'Unknown',
+          answer: `$${result.value?.toLocaleString()}` || result.value?.toString() || 'N/A',
+          value: result.value || 0,
+          confidence: result.confidence || 1,
+          sources: result.sources || [],
+          method: result.method || 'median',
+          provider: (result.sources && result.sources[0]) || 'unknown',
+          raw_responses: result.raw_responses || []
+        };
+      }
+
       res.json({
         success: true,
         transaction: {
@@ -106,11 +152,13 @@ router.get('/transaction/:id', async (req: Request, res: Response) => {
             charged_tx_fee: transactionData.charged_tx_fee,
             max_fee: transactionData.max_fee,
             transaction_hash: transactionData.transaction_hash,
-            consensus_timestamp: transactionData.consensus_timestamp
+            consensus_timestamp: transactionData.consensus_timestamp,
+            hcs_data: hcsData
           },
           blockchain_hash: transactionData.transaction_hash || id,
           explorer_url: `https://hashscan.io/testnet/transaction/${id}`,
-          source: 'MIRROR_NODE'
+          source: 'MIRROR_NODE',
+          oracle_data: oracleData
         },
         hashscan_url: `https://hashscan.io/testnet/transaction/${encodeURIComponent(id)}`
       });
