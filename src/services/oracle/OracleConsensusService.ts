@@ -204,14 +204,46 @@ export class OracleConsensusService {
    * Calculate median consensus
    */
   private calculateMedian(responses: OracleResponse[]): { value: any; confidence: number } {
-    const numericResponses = responses.filter(r => typeof r.data === 'number');
+    console.log('🔢 Median calculation - Raw responses:', responses.map(r => ({source: r.source, data: r.data, type: typeof r.data})));
     
-    if (numericResponses.length === 0) {
+    // Extract numeric values from objects or direct numbers
+    const extractedValues: number[] = [];
+    
+    for (const response of responses) {
+      let value: number | null = null;
+      
+      if (typeof response.data === 'number') {
+        value = response.data;
+      } else if (typeof response.data === 'object' && response.data !== null) {
+        // Extract price from object
+        if ('price' in response.data) {
+          const price = response.data.price;
+          if (typeof price === 'number') {
+            // Handle decimals for Chainlink format
+            if ('decimals' in response.data && typeof response.data.decimals === 'number') {
+              value = price / Math.pow(10, response.data.decimals);
+            } else {
+              value = price;
+            }
+          }
+        }
+      }
+      
+      if (value !== null && !isNaN(value) && isFinite(value)) {
+        extractedValues.push(value);
+      }
+    }
+    
+    console.log('💰 Extracted price values:', extractedValues);
+    
+    if (extractedValues.length === 0) {
       // For non-numeric data, return most common value
       return this.calculateMajorityVote(responses);
     }
 
-    const values = numericResponses.map(r => r.data as number).sort((a, b) => a - b);
+    const values = extractedValues.sort((a, b) => a - b);
+    console.log('📊 Sorted values for median:', values);
+    
     const mid = Math.floor(values.length / 2);
     const median = values.length % 2 !== 0 
       ? values[mid] 
@@ -221,6 +253,7 @@ export class OracleConsensusService {
     const avgDeviation = values.reduce((sum, val) => sum + Math.abs(val - median), 0) / values.length;
     const confidence = Math.max(0.1, 1 - (avgDeviation / median));
 
+    console.log('📈 Median result:', median, 'Confidence:', confidence);
     return { value: median, confidence };
   }
 

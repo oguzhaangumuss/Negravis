@@ -4,7 +4,8 @@ import {
   TopicCreateTransaction, 
   TopicMessageSubmitTransaction,
   TransactionId,
-  Status
+  Status,
+  PrivateKey
 } from '@hashgraph/sdk';
 import { ConsensusResult, HCSLogEntry, OracleQuery } from '../../types/oracle';
 
@@ -43,7 +44,18 @@ export class HederaOracleLogger {
       this.client = Client.forMainnet();
     }
 
-    this.client.setOperator(this.accountId, this.privateKey);
+    try {
+      // Parse private key properly to avoid the warning
+      const privateKey = this.privateKey.startsWith('0x') ? 
+        PrivateKey.fromStringECDSA(this.privateKey.slice(2)) : 
+        PrivateKey.fromStringECDSA(this.privateKey);
+      
+      this.client.setOperator(this.accountId, privateKey);
+    } catch (error: any) {
+      console.warn('⚠️ Hedera private key parsing error:', error.message);
+      // Fallback to original approach
+      this.client.setOperator(this.accountId, this.privateKey);
+    }
   }
 
   /**

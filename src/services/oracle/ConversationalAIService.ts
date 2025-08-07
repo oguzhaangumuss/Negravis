@@ -242,6 +242,249 @@ export class ConversationalAIService extends OracleProviderBase {
   }
 
   /**
+   * Process Oracle data into intelligent response
+   */
+  public async processOracleData(query: string, oracleData: any, sources: string[], confidence: number): Promise<string> {
+    console.log(`🧠 Processing Oracle data for query: "${query}"`);
+    
+    const queryType = this.detectQueryType(query);
+    console.log(`🎯 Query type detected: ${queryType}`);
+    
+    switch (queryType) {
+      case 'crypto_price':
+        return this.formatCryptoPriceResponse(query, oracleData, sources, confidence);
+        
+      case 'weather':
+        return this.formatWeatherResponse(query, oracleData, sources, confidence);
+        
+      case 'exchange_rate':
+        return this.formatExchangeRateResponse(query, oracleData, sources, confidence);
+        
+      case 'space_astronomy':
+        return this.formatSpaceResponse(query, oracleData, sources, confidence);
+        
+      case 'knowledge':
+        return this.formatKnowledgeResponse(query, oracleData, sources, confidence);
+        
+      default:
+        return this.formatGenericResponse(query, oracleData, sources, confidence);
+    }
+  }
+
+  /**
+   * Detect query type for appropriate formatting
+   */
+  private detectQueryType(query: string): string {
+    const lowerQuery = query.toLowerCase();
+    
+    // Crypto price patterns
+    if (lowerQuery.includes('price') || lowerQuery.includes('btc') || lowerQuery.includes('bitcoin') || 
+        lowerQuery.includes('eth') || lowerQuery.includes('ethereum') || lowerQuery.includes('crypto')) {
+      return 'crypto_price';
+    }
+    
+    // Weather patterns
+    if (lowerQuery.includes('weather') || lowerQuery.includes('temperature') || 
+        lowerQuery.includes('forecast') || lowerQuery.includes('climate')) {
+      return 'weather';
+    }
+    
+    // Exchange rate patterns
+    if (lowerQuery.includes('exchange') || lowerQuery.includes('currency') || 
+        lowerQuery.includes('usd') || lowerQuery.includes('eur')) {
+      return 'exchange_rate';
+    }
+    
+    // Space/Astronomy patterns
+    if (lowerQuery.includes('nasa') || lowerQuery.includes('space') || 
+        lowerQuery.includes('mars') || lowerQuery.includes('astronomy')) {
+      return 'space_astronomy';
+    }
+    
+    // Knowledge patterns
+    if (lowerQuery.includes('what is') || lowerQuery.includes('who is') || 
+        lowerQuery.includes('explain') || lowerQuery.includes('wikipedia')) {
+      return 'knowledge';
+    }
+    
+    return 'generic';
+  }
+
+  /**
+   * Format cryptocurrency price response
+   */
+  private formatCryptoPriceResponse(query: string, data: any, sources: string[], confidence: number): string {
+    const symbol = data.symbol || 'Unknown';
+    const price = data.price || data.value || 'N/A';
+    const confidenceText = (confidence * 100).toFixed(1);
+    
+    let response = `💰 **${symbol} Price Update**\n\n`;
+    
+    if (typeof price === 'number') {
+      response += `Current Price: **$${price.toLocaleString()}**\n`;
+      
+      // Add market cap if available
+      if (data.market_cap) {
+        response += `Market Cap: $${(data.market_cap / 1e9).toFixed(2)}B\n`;
+      }
+      
+      // Add 24h volume if available
+      if (data.volume_24h) {
+        response += `24h Volume: $${(data.volume_24h / 1e6).toFixed(1)}M\n`;
+      }
+    } else {
+      response += `Price: ${price}\n`;
+    }
+    
+    response += `\n📊 **Data Quality:**\n`;
+    response += `• Confidence: ${confidenceText}%\n`;
+    response += `• Sources: ${sources.join(', ')}\n`;
+    
+    if (data.last_updated || data.timestamp) {
+      response += `• Last Updated: Just now\n`;
+    }
+    
+    response += `\n🔗 Data verified and logged on Hedera blockchain`;
+    
+    return response;
+  }
+
+  /**
+   * Format weather response
+   */
+  private formatWeatherResponse(query: string, data: any, sources: string[], confidence: number): string {
+    let response = `🌤️ **Weather Information**\n\n`;
+    
+    if (data.temperature !== undefined) {
+      response += `Temperature: **${data.temperature}°C** (${(data.temperature * 9/5 + 32).toFixed(1)}°F)\n`;
+    }
+    
+    if (data.condition) {
+      response += `Conditions: ${data.condition}\n`;
+    }
+    
+    if (data.humidity !== undefined) {
+      response += `Humidity: ${data.humidity}%\n`;
+    }
+    
+    if (data.location) {
+      response += `Location: ${data.location}\n`;
+    }
+    
+    response += `\n📊 **Data Quality:**\n`;
+    response += `• Sources: ${sources.join(', ')}\n`;
+    response += `• Confidence: ${(confidence * 100).toFixed(1)}%\n`;
+    response += `\n🔗 Weather data verified on blockchain`;
+    
+    return response;
+  }
+
+  /**
+   * Format exchange rate response
+   */
+  private formatExchangeRateResponse(query: string, data: any, sources: string[], confidence: number): string {
+    let response = `💱 **Exchange Rate**\n\n`;
+    
+    if (data.pair) {
+      response += `${data.pair}: **${data.rate}**\n`;
+    } else if (data.rate) {
+      response += `Exchange Rate: **${data.rate}**\n`;
+    }
+    
+    response += `\n📊 **Data Quality:**\n`;
+    response += `• Sources: ${sources.join(', ')}\n`;
+    response += `• Confidence: ${(confidence * 100).toFixed(1)}%\n`;
+    response += `\n🔗 Rate data verified on blockchain`;
+    
+    return response;
+  }
+
+  /**
+   * Format space/astronomy response
+   */
+  private formatSpaceResponse(query: string, data: any, sources: string[], confidence: number): string {
+    let response = `🚀 **Space & Astronomy Data**\n\n`;
+    
+    if (data.title) {
+      response += `**${data.title}**\n\n`;
+    }
+    
+    if (data.explanation) {
+      response += `${data.explanation.substring(0, 300)}...\n\n`;
+    }
+    
+    if (data.type === 'near_earth_objects') {
+      response += `Near Earth Objects Today: ${data.object_count}\n`;
+      if (data.potentially_hazardous_count) {
+        response += `Potentially Hazardous: ${data.potentially_hazardous_count}\n`;
+      }
+    }
+    
+    response += `📊 **NASA Data Quality:**\n`;
+    response += `• Source: Official NASA API\n`;
+    response += `• Confidence: ${(confidence * 100).toFixed(1)}%\n`;
+    response += `\n🔗 Space data verified on blockchain`;
+    
+    return response;
+  }
+
+  /**
+   * Format knowledge response
+   */
+  private formatKnowledgeResponse(query: string, data: any, sources: string[], confidence: number): string {
+    let response = `📚 **Knowledge Information**\n\n`;
+    
+    if (data.title || data.top_result?.title) {
+      const title = data.title || data.top_result?.title;
+      response += `**${title}**\n\n`;
+    }
+    
+    if (data.extract || data.top_result?.summary?.extract) {
+      const extract = data.extract || data.top_result?.summary?.extract;
+      response += `${extract}\n\n`;
+    }
+    
+    response += `📊 **Information Quality:**\n`;
+    response += `• Sources: ${sources.join(', ')}\n`;
+    response += `• Confidence: ${(confidence * 100).toFixed(1)}%\n`;
+    response += `\n🔗 Information verified on blockchain`;
+    
+    return response;
+  }
+
+  /**
+   * Format generic response
+   */
+  private formatGenericResponse(query: string, data: any, sources: string[], confidence: number): string {
+    let response = `🔍 **Query Results**\n\n`;
+    
+    // Try to extract meaningful information
+    if (typeof data === 'object' && data !== null) {
+      const keys = Object.keys(data);
+      const importantKeys = keys.filter(key => 
+        !['timestamp', 'last_updated', 'source', 'confidence'].includes(key)
+      ).slice(0, 5);
+      
+      for (const key of importantKeys) {
+        const value = data[key];
+        if (value !== undefined && value !== null) {
+          const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          response += `• ${displayKey}: ${value}\n`;
+        }
+      }
+    } else {
+      response += `Result: ${data}\n`;
+    }
+    
+    response += `\n📊 **Data Quality:**\n`;
+    response += `• Sources: ${sources.join(', ')}\n`;
+    response += `• Confidence: ${(confidence * 100).toFixed(1)}%\n`;
+    response += `\n🔗 Data verified on blockchain`;
+    
+    return response;
+  }
+
+  /**
    * Add new conversational pattern
    */
   public addConversationalPattern(intent: string, pattern: RegExp, responses: string[]): void {

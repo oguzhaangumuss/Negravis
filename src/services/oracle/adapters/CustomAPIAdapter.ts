@@ -224,6 +224,13 @@ export class CustomAPIAdapter extends OracleProviderBase {
   getEndpoints(): Map<string, APIEndpointConfig> {
     return new Map(this.endpoints);
   }
+
+  /**
+   * Get supported symbols (custom API, return empty by default)
+   */
+  getSupportedSymbols(): string[] {
+    return [];
+  }
 }
 
 export interface CustomAPIConfig {

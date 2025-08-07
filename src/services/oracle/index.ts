@@ -14,7 +14,7 @@ export { ChainlinkOracleAdapter } from './adapters/ChainlinkOracleAdapter';
 export { CustomAPIAdapter } from './adapters/CustomAPIAdapter';
 export { CoinGeckoOracleAdapter } from './adapters/CoinGeckoOracleAdapter';
 export { WeatherOracleAdapter } from './adapters/WeatherOracleAdapter';
-export { WebScrapingAdapter } from './adapters/WebScrapingAdapter';
+// WebScrapingAdapter removed due to connection issues
 
 // Chatbot integration
 export { ChatbotManager } from './chatbot/ChatbotManager';

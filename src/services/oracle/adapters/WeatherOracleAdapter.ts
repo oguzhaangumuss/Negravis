@@ -381,4 +381,11 @@ export class WeatherOracleAdapter extends OracleProviderBase {
       ]
     };
   }
+
+  /**
+   * Get supported symbols (weather doesn't use symbols, return empty)
+   */
+  getSupportedSymbols(): string[] {
+    return [];
+  }
 }

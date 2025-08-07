@@ -66,9 +66,9 @@
                     </button>
                 </div>
                 <div class="mt-3 flex space-x-4 text-sm text-gray-600">
-                    <button onclick="setSearchType('chatId')" class="hover:text-blue-600">Chat ID</button>
+                    <button onclick="setSearchType('query')" class="hover:text-blue-600">Oracle Query</button>
                     <button onclick="setSearchType('transaction')" class="hover:text-blue-600">Transaction</button>
-                    <button onclick="setSearchType('account')" class="hover:text-blue-600">Account</button>
+                    <button onclick="setSearchType('verify')" class="hover:text-blue-600">Verify Hash</button>
                 </div>
             </div>
         </div>
@@ -186,6 +186,85 @@
             </div>
         </div>
 
+        <!-- Oracle Query Results -->
+        <div id="queryResults" class="hidden">
+            <div class="space-y-6">
+                <!-- Query Overview -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="font-semibold text-gray-800 mb-4">Oracle Query Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-question-circle text-blue-600 text-2xl"></i>
+                                <div>
+                                    <h4 class="font-medium text-blue-800">Query</h4>
+                                    <p class="text-blue-600" id="queryText">-</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-4">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+                                <div>
+                                    <h4 class="font-medium text-green-800">Answer</h4>
+                                    <p class="text-green-600 font-bold" id="answerText">-</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-4">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-shield-alt text-purple-600 text-2xl"></i>
+                                <div>
+                                    <h4 class="font-medium text-purple-800">Confidence</h4>
+                                    <p class="text-purple-600 font-bold" id="confidenceText">-</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Data Sources -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="font-semibold text-gray-800 mb-4">📊 Data Sources</h3>
+                    <div id="sourcesContainer" class="space-y-3">
+                        <!-- Sources will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Blockchain Verification -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="font-semibold text-gray-800 mb-4">🔗 Blockchain Verification</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-medium text-gray-700 mb-3">Transaction Details</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Transaction ID:</span>
+                                    <span class="font-mono" id="blockchainTxId">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Network:</span>
+                                    <span class="font-medium" id="blockchainNetwork">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Status:</span>
+                                    <span class="text-green-600 font-medium">✅ Verified</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-700 mb-3">Consensus Metadata</h4>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <div id="consensusMetadata" class="space-y-2 text-sm">
+                                    <div>Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Account Results -->
         <div id="accountResults" class="hidden">
             <div class="bg-white rounded-lg shadow-md p-6">
@@ -212,11 +291,113 @@
             currentSearchType = type;
             const input = document.getElementById('searchInput');
             const placeholders = {
-                'chatId': 'Enter Chat ID from oracle response',
+                'query': 'Enter Oracle Query ID (e.g., bitcoin-price)',
                 'transaction': 'Enter Transaction Hash',
-                'account': 'Enter Account Address'
+                'verify': 'Enter Hash to verify'
             };
             input.placeholder = placeholders[type] || 'Enter search term';
+        }
+
+        function showQueryResults(data) {
+            document.getElementById('loadingSpinner').classList.add('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+            document.getElementById('verificationResults').classList.add('hidden');
+            document.getElementById('transactionResults').classList.add('hidden');
+            document.getElementById('accountResults').classList.add('hidden');
+            document.getElementById('queryResults').classList.remove('hidden');
+            document.getElementById('welcomeMessage').classList.add('hidden');
+
+            const query = data.query;
+            
+            // Populate query overview
+            document.getElementById('queryText').textContent = query.query || '-';
+            document.getElementById('answerText').textContent = query.answer || '-';
+            document.getElementById('confidenceText').textContent = query.metadata ? 
+                `${query.metadata.confidence_score}%` : '-';
+            
+            // Populate data sources
+            const sourcesContainer = document.getElementById('sourcesContainer');
+            sourcesContainer.innerHTML = '';
+            
+            if (query.sources && Array.isArray(query.sources)) {
+                query.sources.forEach((source, index) => {
+                    const sourceDiv = document.createElement('div');
+                    sourceDiv.className = 'bg-gray-50 rounded-lg p-4 border';
+                    sourceDiv.innerHTML = `
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-lg font-medium text-gray-800">${source.name}</span>
+                                <span class="px-2 py-1 text-xs rounded-full ${source.type === 'blockchain' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
+                                    ${source.type}
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm text-gray-600">Weight: ${source.weight}%</div>
+                                <div class="text-sm text-gray-600">Confidence: ${source.confidence}%</div>
+                            </div>
+                        </div>
+                        <a href="${source.url}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm break-all">
+                            ${source.url}
+                        </a>
+                    `;
+                    sourcesContainer.appendChild(sourceDiv);
+                });
+            }
+            
+            // Populate blockchain verification
+            if (query.blockchain) {
+                document.getElementById('blockchainTxId').textContent = query.blockchain.transaction_id || '-';
+                document.getElementById('blockchainNetwork').textContent = query.blockchain.network || '-';
+            }
+            
+            // Populate consensus metadata
+            if (query.metadata) {
+                const metadataDiv = document.getElementById('consensusMetadata');
+                metadataDiv.innerHTML = `
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Consensus Method:</span>
+                        <span class="font-medium">${query.metadata.consensus_method || 'median'}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Provider Count:</span>
+                        <span class="font-medium">${query.metadata.provider_count || 3}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Execution Time:</span>
+                        <span class="font-medium">${query.metadata.execution_time_ms || 'N/A'} ms</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Blockchain Verified:</span>
+                        <span class="font-medium text-green-600">✅ ${query.metadata.blockchain_verified !== false ? 'Yes' : 'No'}</span>
+                    </div>
+                `;
+            }
+        }
+
+        // Parse URL parameters on page load
+        function parseURLParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const type = urlParams.get('type');
+            const id = urlParams.get('id');
+            const hash = urlParams.get('hash');
+            
+            if (type && (id || hash)) {
+                const searchInput = document.getElementById('searchInput');
+                
+                if (type === 'query' && id) {
+                    setSearchType('query');
+                    searchInput.value = id;
+                    searchVerification();
+                } else if (type === 'transaction' && id) {
+                    setSearchType('transaction');
+                    searchInput.value = id;
+                    searchVerification();
+                } else if (type === 'verify' && hash) {
+                    setSearchType('verify');
+                    searchInput.value = hash;
+                    searchVerification();
+                }
+            }
         }
 
         function showLoading() {
@@ -243,23 +424,28 @@
             document.getElementById('verificationResults').classList.remove('hidden');
             document.getElementById('transactionResults').classList.add('hidden');
             document.getElementById('accountResults').classList.add('hidden');
+            document.getElementById('queryResults').classList.add('hidden');
             document.getElementById('welcomeMessage').classList.add('hidden');
 
             // Populate verification data
             const verification = data.verification;
             document.getElementById('timestampInfo').textContent = new Date(verification.timestamp).toLocaleString();
-            document.getElementById('providerInfo').textContent = verification.provider;
-            document.getElementById('chatIdInfo').textContent = verification.chatId;
-            document.getElementById('txHashInfo').textContent = verification.transactionHash;
+            document.getElementById('providerInfo').textContent = verification.type || 'Oracle Query';
+            document.getElementById('chatIdInfo').textContent = verification.hash || '-';
+            document.getElementById('txHashInfo').textContent = verification.hash || '-';
             
-            if (verification.account) {
-                document.getElementById('balanceInfo').textContent = verification.account.ledgerBalance || verification.account.ethBalance || '0';
-                document.getElementById('nonceInfo').textContent = '0'; // Nonce not available in current account structure
-            }
+            document.getElementById('balanceInfo').textContent = verification.fee || '0';
+            document.getElementById('nonceInfo').textContent = verification.confirmations || '0';
+            document.getElementById('oracleStatusInfo').textContent = verification.verified ? 'Verified' : 'Pending';
             
-            document.getElementById('oracleStatusInfo').textContent = verification.metadata.oracleReady ? 'Active' : 'Inactive';
-            document.getElementById('metadataInfo').textContent = JSON.stringify(verification.metadata, null, 2);
-            document.getElementById('accountDetails').textContent = JSON.stringify(verification.account, null, 2);
+            document.getElementById('metadataInfo').textContent = JSON.stringify({
+                network: verification.network,
+                status: verification.status,
+                block_number: verification.block_number,
+                gas_used: verification.gas_used
+            }, null, 2);
+            
+            document.getElementById('accountDetails').textContent = JSON.stringify(verification.details || {}, null, 2);
         }
 
         function showTransactionResults(data) {
@@ -295,9 +481,32 @@
                         </div>
                     </div>
                     <div>
-                        <h4 class="font-medium text-gray-700 mb-3">Details</h4>
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <pre class="text-sm text-gray-600">${JSON.stringify(transaction.details, null, 2)}</pre>
+                        <h4 class="font-medium text-gray-700 mb-3">Query Information</h4>
+                        <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+                            ${transaction.details && transaction.details.query ? 
+                                `<div>
+                                    <span class="text-gray-600 font-medium">Query:</span>
+                                    <p class="text-gray-800 mt-1">${transaction.details.query}</p>
+                                </div>` : ''}
+                            ${transaction.details && transaction.details.answer ? 
+                                `<div>
+                                    <span class="text-gray-600 font-medium">Answer:</span>
+                                    <p class="text-gray-800 font-semibold mt-1">${transaction.details.answer}</p>
+                                </div>` : ''}
+                            ${transaction.details && transaction.details.confidence ? 
+                                `<div>
+                                    <span class="text-gray-600 font-medium">Confidence:</span>
+                                    <p class="text-green-600 font-semibold mt-1">${transaction.details.confidence}%</p>
+                                </div>` : ''}
+                            ${transaction.details && transaction.details.sources && Array.isArray(transaction.details.sources) ? 
+                                `<div>
+                                    <span class="text-gray-600 font-medium">Data Sources:</span>
+                                    <div class="flex flex-wrap gap-2 mt-2">
+                                        ${transaction.details.sources.map(source => 
+                                            `<span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">${source}</span>`
+                                        ).join('')}
+                                    </div>
+                                </div>` : ''}
                         </div>
                     </div>
                 </div>
@@ -373,24 +582,14 @@
                 let response;
                 let endpoint;
 
-                if (currentSearchType === 'chatId') {
-                    // Verify oracle response
-                    endpoint = '/api/services/oracle/hashscan/verify';
-                    response = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            chatId: searchTerm,
-                            provider: 'llama-3.3-70b-instruct'
-                        })
-                    });
-                } else if (currentSearchType === 'transaction') {
-                    endpoint = `/api/services/oracle/hashscan/transaction/${encodeURIComponent(searchTerm)}`;
+                if (currentSearchType === 'query') {
+                    endpoint = `/api/hashscan/query/${encodeURIComponent(searchTerm)}`;
                     response = await fetch(endpoint);
-                } else if (currentSearchType === 'account') {
-                    endpoint = `/api/services/oracle/hashscan/account/${encodeURIComponent(searchTerm)}`;
+                } else if (currentSearchType === 'transaction') {
+                    endpoint = `/api/hashscan/transaction/${encodeURIComponent(searchTerm)}`;
+                    response = await fetch(endpoint);
+                } else if (currentSearchType === 'verify') {
+                    endpoint = `/api/hashscan/verify/${encodeURIComponent(searchTerm)}`;
                     response = await fetch(endpoint);
                 }
 
@@ -405,12 +604,12 @@
                 }
 
                 // Show appropriate results based on search type
-                if (currentSearchType === 'chatId') {
-                    showVerificationResults(data);
+                if (currentSearchType === 'query') {
+                    showQueryResults(data);
                 } else if (currentSearchType === 'transaction') {
                     showTransactionResults(data);
-                } else if (currentSearchType === 'account') {
-                    showAccountResults(data);
+                } else if (currentSearchType === 'verify') {
+                    showVerificationResults(data);
                 }
 
             } catch (error) {
@@ -427,7 +626,12 @@
         });
 
         // Set initial search type
-        setSearchType('chatId');
+        setSearchType('query');
+        
+        // Parse URL parameters on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            parseURLParams();
+        });
     </script>
 </body>
 </html>

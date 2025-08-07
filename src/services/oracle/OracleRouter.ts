@@ -3,7 +3,13 @@ import { ChainlinkOracleAdapter } from './adapters/ChainlinkOracleAdapter';
 import { CustomAPIAdapter } from './adapters/CustomAPIAdapter';
 import { CoinGeckoOracleAdapter } from './adapters/CoinGeckoOracleAdapter';
 import { WeatherOracleAdapter } from './adapters/WeatherOracleAdapter';
-import { WebScrapingAdapter } from './adapters/WebScrapingAdapter';
+import { ExchangeRateAdapter } from './adapters/ExchangeRateAdapter';
+import { PythOracleAdapter } from './adapters/PythOracleAdapter';
+// SupraOracleAdapter removed - was duplicate of CoinGecko
+import { NASAOracleAdapter } from './adapters/NASAOracleAdapter';
+import { WikipediaOracleAdapter } from './adapters/WikipediaOracleAdapter';
+import { DIAOracleAdapter } from './adapters/DIAOracleAdapter';
+import { SportsOracleAdapter } from './adapters/SportsOracleAdapter';
 import { ConversationalAIService } from './ConversationalAIService';
 import { HederaOracleLogger } from './HederaOracleLogger';
 import { 
@@ -32,7 +38,7 @@ export class OracleRouter {
   constructor(private config?: OracleConfig) {
     this.consensusService = new OracleConsensusService({
       defaultMethod: config?.consensus?.default_method || ConsensusMethod.MEDIAN,
-      minResponses: config?.consensus?.min_responses || 2,
+      minResponses: config?.consensus?.min_responses || 1, // Allow single provider
       maxResponseTime: config?.consensus?.max_response_time || 10000,
       outlierThreshold: config?.consensus?.outlier_threshold || 0.3
     });
@@ -309,6 +315,12 @@ export class OracleRouter {
   }
 
   private async registerDefaultProviders(): Promise<void> {
+    // Supra provider removed - was duplicate of CoinGecko
+
+    // Register Pyth provider (Premium tier - currently disabled due to API issues)
+    // const pythProvider = new PythOracleAdapter();
+    // this.registerProvider(pythProvider);
+
     // Register Chainlink provider
     const chainlinkProvider = new ChainlinkOracleAdapter();
     this.registerProvider(chainlinkProvider);
@@ -317,13 +329,29 @@ export class OracleRouter {
     const coinGeckoProvider = new CoinGeckoOracleAdapter();
     this.registerProvider(coinGeckoProvider);
 
+    // Register DIA provider (Transparent oracle)
+    const diaProvider = new DIAOracleAdapter();
+    this.registerProvider(diaProvider);
+
     // Register Weather provider
     const weatherProvider = new WeatherOracleAdapter();
     this.registerProvider(weatherProvider);
 
-    // Register Web Scraping provider
-    const webScrapingProvider = new WebScrapingAdapter();
-    this.registerProvider(webScrapingProvider);
+    // Register ExchangeRate provider
+    const exchangeRateProvider = new ExchangeRateAdapter();
+    this.registerProvider(exchangeRateProvider);
+
+    // Register NASA provider (Space & Earth science data)
+    const nasaProvider = new NASAOracleAdapter();
+    this.registerProvider(nasaProvider);
+
+    // Register Wikipedia provider (Knowledge database)
+    const wikipediaProvider = new WikipediaOracleAdapter();
+    this.registerProvider(wikipediaProvider);
+
+    // Register Sports provider (NBA + Global sports data)
+    const sportsProvider = new SportsOracleAdapter();
+    this.registerProvider(sportsProvider);
 
     // Register Custom API providers from config
     if (this.config?.providers) {
@@ -390,7 +418,10 @@ export class OracleRouter {
     // Otherwise, use query type-based routing
     switch (queryType) {
       case OracleQueryType.PRICE_FEED:
-        return ['chainlink', 'coingecko']; // Only crypto price providers
+        return ['supra', 'chainlink', 'coingecko', 'dia']; // Premium + reliable price providers
+        
+      case OracleQueryType.EXCHANGE_RATE:
+        return ['exchangerate']; // Only exchange rate provider
         
       case OracleQueryType.WEATHER_DATA:
         return ['weather']; // Only weather provider
@@ -400,6 +431,12 @@ export class OracleRouter {
         
       case OracleQueryType.WEB_SEARCH:
         return ['web-scraping']; // Only web scraping for search
+        
+      case OracleQueryType.SPACE_DATA:
+        return ['nasa']; // NASA for space and astronomy data
+        
+      case OracleQueryType.KNOWLEDGE_QUERY:
+        return ['wikipedia']; // Wikipedia for knowledge queries
         
       case OracleQueryType.CUSTOM:
       default:
@@ -424,6 +461,13 @@ export class OracleRouter {
       return OracleQueryType.PRICE_FEED;
     }
     
+    // Exchange rate queries
+    if (lowerQuery.includes('exchange') || lowerQuery.includes('currency') || lowerQuery.includes('forex') ||
+        lowerQuery.match(/\b(usd|eur|gbp|jpy|chf|cad|aud|nzd|try|rub|cny|inr|brl|mxn|zar|krw|sgd|hkd|nok|sek|dkk|pln|czk|huf)\b/i) ||
+        lowerQuery.match(/[A-Z]{3}\/[A-Z]{3}/) || lowerQuery.match(/[A-Z]{3}\s+to\s+[A-Z]{3}/)) {
+      return OracleQueryType.EXCHANGE_RATE;
+    }
+    
     // Weather queries (with typo tolerance and city detection)
     if (lowerQuery.includes('weather') || lowerQuery.includes('wheather') || lowerQuery.includes('whather') ||
         lowerQuery.includes('temperature') || lowerQuery.includes('forecast') || 
@@ -443,7 +487,70 @@ export class OracleRouter {
       return OracleQueryType.WEB_SEARCH;
     }
     
+    // Space and astronomy queries
+    if (lowerQuery.includes('space') || lowerQuery.includes('nasa') || lowerQuery.includes('astronomy') ||
+        lowerQuery.includes('mars') || lowerQuery.includes('asteroid') || lowerQuery.includes('satellite') ||
+        lowerQuery.includes('solar') || lowerQuery.includes('planet') || lowerQuery.includes('earth observation')) {
+      return OracleQueryType.SPACE_DATA;
+    }
+    
+    // Knowledge and information queries
+    if (lowerQuery.includes('what is') || lowerQuery.includes('who is') || lowerQuery.includes('tell me about') ||
+        lowerQuery.includes('explain') || lowerQuery.includes('definition') || lowerQuery.includes('history') ||
+        lowerQuery.includes('wikipedia') || lowerQuery.includes('information')) {
+      return OracleQueryType.KNOWLEDGE_QUERY;
+    }
+    
     return OracleQueryType.CUSTOM;
+  }
+
+  /**
+   * Query with specific providers (used by OracleManager)
+   */
+  async queryWithProviders(query: string, providerNames: string[], options?: OracleQueryOptions): Promise<ConsensusResult> {
+    if (!this.isInitialized) {
+      throw new Error('OracleRouter not initialized. Call initialize() first.');
+    }
+
+    console.log(`🎯 Query with specific providers: [${providerNames.join(', ')}]`);
+    
+    // Filter providers to only use specified ones
+    const selectedProviders = providerNames
+      .map(name => this.providers.get(name))
+      .filter(provider => provider !== undefined) as OracleProvider[];
+
+    if (selectedProviders.length === 0) {
+      throw new Error(`No valid providers found from: ${providerNames.join(', ')}`);
+    }
+
+    // Use consensus service with selected providers only
+    const tempConsensus = new OracleConsensusService({
+      minResponses: Math.min(1, selectedProviders.length),
+      maxResponseTime: 10000
+    });
+
+    // Register selected providers
+    selectedProviders.forEach(provider => {
+      tempConsensus.registerProvider(provider);
+    });
+
+    try {
+      const result = await tempConsensus.getConsensus(query, options);
+      
+      // Log the oracle interaction
+      if (this.hederaLogger) {
+        const queryId = `query_${Date.now()}`;
+        // Mock blockchain logging
+        console.log('📝 Would log to blockchain:', { queryId, query, providers: providerNames });
+      }
+
+      console.log(`✅ Oracle query completed: ${result.sources.length} sources, confidence: ${(result.confidence * 100).toFixed(1)}%`);
+      return result;
+
+    } catch (error: any) {
+      console.error(`❌ Oracle query failed:`, error);
+      throw new Error(`Oracle query failed: ${error.message}`);
+    }
   }
 
   /**

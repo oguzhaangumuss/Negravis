@@ -72,11 +72,14 @@ export interface ConsensusResult {
 
 export enum OracleQueryType {
   PRICE_FEED = 'price_feed',
+  EXCHANGE_RATE = 'exchange_rate',
   WEATHER_DATA = 'weather_data',
   SPORTS_RESULT = 'sports_result',
   NEWS_VERIFICATION = 'news_verification',
   WEB_SEARCH = 'web_search',
   DATABASE_QUERY = 'database_query',
+  SPACE_DATA = 'space_data',
+  KNOWLEDGE_QUERY = 'knowledge_query',
   CUSTOM = 'custom'
 }
 

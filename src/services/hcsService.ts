@@ -17,6 +17,15 @@ dotenv.config();
  * Hedera Consensus Service (HCS) Integration
  * Provides immutable logging and audit trail for oracle operations
  */
+interface HCSTransaction {
+  transactionId: string;
+  topicId: string;
+  type: 'ORACLE_QUERY' | 'COMPUTE_OPERATION' | 'ACCOUNT_OPERATION' | 'SYSTEM_METRICS';
+  timestamp: string;
+  sequenceNumber?: bigint;
+  data: any;
+}
+
 export class HCSService {
   private client: Client;
   private isInitialized = false;
@@ -28,6 +37,9 @@ export class HCSService {
     accountOperations?: string;
     systemMetrics?: string;
   } = {};
+
+  // Store recent transactions for frontend
+  private recentTransactions: HCSTransaction[] = [];
 
   constructor() {
     // Initialize client for testnet
@@ -50,7 +62,7 @@ export class HCSService {
       const operatorKey = process.env.HEDERA_PRIVATE_KEY || process.env.PRIVATE_KEY;
 
       if (!operatorKey) {
-        throw new Error('PRIVATE_KEY is required for HCS integration');
+        throw new Error('HEDERA_PRIVATE_KEY is required for HCS integration');
       }
 
       // For testnet, we'll use a default account if HEDERA_ACCOUNT_ID is not set
@@ -58,24 +70,45 @@ export class HCSService {
         console.log("⚠️ HEDERA_ACCOUNT_ID not set, using derived account from private key");
       }
 
-      // Set operator with private key
-      const privateKey = PrivateKey.fromStringECDSA(operatorKey);
-      const accountId = operatorId ? AccountId.fromString(operatorId) : privateKey.publicKey.toAccountId(0, 0);
-      
-      this.client.setOperator(accountId, privateKey);
-
-      // Test connection
       try {
-        const accountInfo = await new AccountBalanceQuery()
-          .setAccountId(accountId)
-          .execute(this.client);
-        console.log(`✅ HCS connected - Account balance: ${accountInfo.hbars.toString()}`);
-      } catch (balanceError) {
-        console.log("⚠️ Could not check account balance (continuing anyway)");
-      }
+        // Set operator with private key - handle different formats
+        let privateKey: PrivateKey;
+        
+        try {
+          // Try hex format first (0x...)
+          if (operatorKey.startsWith('0x')) {
+            privateKey = PrivateKey.fromStringECDSA(operatorKey);
+          } else {
+            // Try DER format
+            privateKey = PrivateKey.fromString(operatorKey);
+          }
+        } catch (keyParseError: any) {
+          console.log(`⚠️ Key parse error: ${keyParseError.message}`);
+          // Try alternative parsing
+          privateKey = PrivateKey.fromStringECDSA(operatorKey);
+        }
+        
+        const accountId = operatorId ? AccountId.fromString(operatorId) : privateKey.publicKey.toAccountId(0, 0);
+        
+        console.log(`🔑 Using account: ${accountId.toString()}`);
+        this.client.setOperator(accountId, privateKey);
 
-      this.isInitialized = true;
-      console.log("✅ Hedera Consensus Service initialized successfully");
+        // Test connection
+        try {
+          const accountInfo = await new AccountBalanceQuery()
+            .setAccountId(accountId)
+            .execute(this.client);
+          console.log(`✅ HCS connected - Account balance: ${accountInfo.hbars.toString()}`);
+        } catch (balanceError) {
+          console.log("⚠️ Could not check account balance (continuing anyway)");
+        }
+
+        this.isInitialized = true;
+        console.log("✅ Hedera Consensus Service initialized successfully");
+      } catch (credentialError) {
+        console.error(`❌ Failed to initialize with credentials: ${credentialError.message}`);
+        throw credentialError;
+      }
 
     } catch (error: any) {
       console.error("❌ Failed to initialize HCS:", error.message);
@@ -298,7 +331,7 @@ export class HCSService {
   /**
    * Submit message to HCS topic
    */
-  private async submitMessage(topicId: string, message: string): Promise<void> {
+  private async submitMessage(topicId: string, message: string): Promise<string> {
     try {
       // Clean and validate JSON message
       const cleanMessage = message.replace(/[\u0000-\u001F\u007F-\u009F]/g, ""); // Remove control characters
@@ -310,7 +343,14 @@ export class HCSService {
         .execute(this.client);
 
       const receipt = await submitTx.getReceipt(this.client);
-      console.log(`💾 HCS message submitted to topic ${topicId} - Sequence: ${receipt.topicSequenceNumber}`);
+      const transactionId = submitTx.transactionId?.toString() || 'unknown';
+      
+      // Store transaction for frontend access
+      const sequenceNumber = receipt.topicSequenceNumber ? BigInt(receipt.topicSequenceNumber.toString()) : undefined;
+      this.storeTransaction(transactionId, topicId, message, sequenceNumber);
+      
+      console.log(`💾 HCS message submitted to topic ${topicId} - Sequence: ${receipt.topicSequenceNumber} - TX: ${transactionId}`);
+      return transactionId;
     } catch (error: any) {
       console.error(`❌ Failed to submit message to HCS topic ${topicId}:`, error.message);
       throw error;
@@ -332,6 +372,47 @@ export class HCSService {
    */
   getTopicIds(): typeof this.topicIds {
     return { ...this.topicIds };
+  }
+
+  /**
+   * Store transaction for frontend access
+   */
+  private storeTransaction(transactionId: string, topicId: string, message: string, sequenceNumber?: bigint): void {
+    try {
+      const messageData = JSON.parse(message);
+      const transaction: HCSTransaction = {
+        transactionId,
+        topicId,
+        type: messageData.type || 'ORACLE_QUERY',
+        timestamp: messageData.timestamp || new Date().toISOString(),
+        sequenceNumber,
+        data: messageData
+      };
+
+      // Add to recent transactions (keep last 50)
+      this.recentTransactions.unshift(transaction);
+      if (this.recentTransactions.length > 50) {
+        this.recentTransactions = this.recentTransactions.slice(0, 50);
+      }
+    } catch (error) {
+      console.error('Failed to parse and store transaction:', error);
+    }
+  }
+
+  /**
+   * Get recent HCS transactions for frontend
+   */
+  getRecentTransactions(limit: number = 10): HCSTransaction[] {
+    return this.recentTransactions.slice(0, limit);
+  }
+
+  /**
+   * Get transactions by type
+   */
+  getTransactionsByType(type: 'ORACLE_QUERY' | 'COMPUTE_OPERATION' | 'ACCOUNT_OPERATION' | 'SYSTEM_METRICS', limit: number = 10): HCSTransaction[] {
+    return this.recentTransactions
+      .filter(tx => tx.type === type)
+      .slice(0, limit);
   }
 
   /**
