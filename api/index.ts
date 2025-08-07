@@ -15,6 +15,7 @@ import oracleRoutes from '../src/routes/oracleRoutes';
 import hfsRoutes from '../src/routes/hfsRoutes';
 import analyticsRoutes from '../src/routes/analyticsRoutes';
 import hcsRoutes from '../src/routes/hcsRoutes';
+import hashscanRoutes from '../src/routes/hashscanRoutes';
 import enhancedOracleRoutes from '../src/api/routes/oracle';
 
 // Create Express app
@@ -55,7 +56,7 @@ app.use(`${apiPrefix}/oracles`, oracleRoutes);
 app.use(`${apiPrefix}/hfs`, hfsRoutes);
 app.use(`${apiPrefix}/analytics`, analyticsRoutes);
 app.use(`${apiPrefix}/hcs`, hcsRoutes);
-app.use(`${apiPrefix}/hashscan`, require('../src/routes/hashscanRoutes').default);
+app.use(`${apiPrefix}/hashscan`, hashscanRoutes);
 app.use(`${apiPrefix}/oracle-manager`, enhancedOracleRoutes);
 
 // Root route
