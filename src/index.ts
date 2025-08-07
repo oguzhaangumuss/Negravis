@@ -28,15 +28,21 @@ const getAllowedOrigins = () => {
   if (process.env.NODE_ENV === 'production') {
     const productionUrls = [
       'https://negravis-frontend.vercel.app',
-      'https://negravis-frontend-git-main-oguzhangumus.vercel.app',
-      'https://negravis-frontend-oguzhangumus.vercel.app'
+      'https://negravis-app.vercel.app',
+      'https://negravis-frontend-oguzhaangumuss-projects.vercel.app'
     ];
     if (process.env.FRONTEND_URL) {
       productionUrls.push(...process.env.FRONTEND_URL.split(',').map(url => url.trim()));
     }
     return productionUrls;
   }
-  return true; // Allow all origins in development
+  // Development origins
+  return [
+    'http://localhost:3000',
+    'http://localhost:3001', 
+    'https://negravis-frontend.vercel.app',
+    'https://negravis-frontend-oguzhaangumuss-projects.vercel.app'
+  ];
 };
 
 const corsOptions = {
