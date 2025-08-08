@@ -80,24 +80,49 @@ app.use(`${apiPrefix}/hashscan`, require('./routes/hashscanRoutes').default); //
 app.use(`${apiPrefix}/oracle-manager`, oracleManagerRoutes); // Oracle Manager routes with HCS logging
 
 // NEW Oracle API Controller Routes (WITH DATABASE RECORDING)
-// Initialize Oracle Router for the Oracle API Controller
+// Initialize Oracle Router for the Oracle API Controller with fallback
 const initializeOracleAPIRoutes = async () => {
   try {
+    console.log('🚀 Initializing Oracle API Controller...');
     const oracleRouter = new OracleRouter();
     await oracleRouter.initialize();
+    console.log('✅ Oracle Router initialized successfully');
     return createOracleRoutes(oracleRouter);
   } catch (error) {
     console.error('❌ Oracle API Router initialization failed:', error);
-    throw error;
+    
+    // Fallback: Create routes with non-initialized router for basic functionality
+    console.warn('⚠️ Creating fallback Oracle API routes...');
+    const fallbackRouter = new OracleRouter();
+    return createOracleRoutes(fallbackRouter);
   }
 };
 
 // Setup Oracle API Controller routes with database recording
 initializeOracleAPIRoutes().then(oracleAPIRoutes => {
   app.use(`${apiPrefix}/oracle`, oracleAPIRoutes);
-  console.log('✅ Oracle API Controller routes initialized with database recording');
+  console.log('✅ Oracle API Controller routes registered');
 }).catch(error => {
-  console.error('❌ Failed to initialize Oracle API Controller routes:', error);
+  console.error('❌ Critical error: Failed to initialize Oracle API Controller routes:', error);
+  
+  // Create minimal fallback routes
+  const Router = require('express').Router;
+  const fallbackRouter = Router();
+  
+  fallbackRouter.get('/ping', (req: any, res: any) => {
+    res.json({ success: true, status: 'fallback_mode', message: 'Oracle API in fallback mode' });
+  });
+  
+  fallbackRouter.get('/query', (req: any, res: any) => {
+    res.status(503).json({ 
+      success: false, 
+      error: 'Oracle system temporarily unavailable',
+      fallback: true 
+    });
+  });
+  
+  app.use(`${apiPrefix}/oracle`, fallbackRouter);
+  console.log('⚠️ Oracle API Controller running in fallback mode');
 });
 
 // Root route - serve the landing page
