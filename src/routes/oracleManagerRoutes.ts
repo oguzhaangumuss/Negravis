@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { oracleManager } from '../services/oracleManager';
 import { hcsService } from '../services/hcsService';
+import { supabaseService } from '../services/supabaseService';
 
 const router = express.Router();
 
@@ -135,6 +136,7 @@ router.post('/query', async (req: Request, res: Response) => {
 
     // Log successful query to HCS (with full blockchain verification)
     let blockchainInfo = null;
+    let hcsTopicId: string | null = null;
     try {
       const realTransactionId = await hcsService.logOracleQuery({
         queryId,
@@ -149,6 +151,10 @@ router.post('/query', async (req: Request, res: Response) => {
       
       // Use real HCS transaction ID from blockchain submission
       const transactionId = realTransactionId;
+      
+      // Get HCS topic ID from service
+      const topicIds = hcsService.getTopicIds();
+      hcsTopicId = topicIds.oracleQueries || null;
       
       blockchainInfo = {
         transaction_id: transactionId,
@@ -170,6 +176,37 @@ router.post('/query', async (req: Request, res: Response) => {
         verified: false,
         explorer_link: '#'
       };
+    }
+
+    // 🔥 CRITICAL: Save to database with HCS topic ID (SAME AS ORACLE API CONTROLLER)
+    try {
+      const userSessionId = userId || 'anonymous';
+      await supabaseService.saveQueryHistory({
+        query_id: queryId,
+        user_session_id: userSessionId,
+        query,
+        provider: provider,
+        answer: formatAnswerFromResult(result, query),
+        oracle_used: provider,
+        oracle_info: {
+          method: result.method || 'oracle_manager',
+          confidence: result.confidence || 0.9,
+          execution_time_ms: executionTime,
+          sources: result.sources || [provider]
+        },
+        data_sources: result.sources || [provider],
+        confidence: result.confidence || 0.9,
+        raw_data: result.value,
+        blockchain_hash: blockchainInfo?.transaction_id || undefined,
+        blockchain_link: blockchainInfo?.explorer_link || undefined,
+        hcs_topic_id: hcsTopicId || undefined, // 🔥 CRITICAL: Save HCS topic ID
+        execution_time_ms: executionTime,
+        cost_tinybars: Math.floor(Math.random() * 100) // Placeholder cost calculation
+      });
+      
+      console.log(`💾 Oracle Manager query saved to database with topic ID: ${hcsTopicId}`);
+    } catch (dbError) {
+      console.error('❌ Oracle Manager database save failed:', dbError);
     }
 
     // Return enhanced response with blockchain verification
