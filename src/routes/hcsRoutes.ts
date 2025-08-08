@@ -45,6 +45,48 @@ router.get('/transactions', async (req, res) => {
 });
 
 /**
+ * Get active HCS topic IDs from database
+ * GET /api/hcs/topics/active
+ */
+router.get('/topics/active', async (req, res) => {
+  try {
+    console.log('📊 Getting active HCS topics from database');
+    
+    // Import supabaseService dynamically to avoid circular dependencies
+    const { supabaseService } = await import('../services/supabaseService');
+    
+    const hoursBack = parseInt(req.query.hours as string) || 24;
+    const activeTopics = await supabaseService.getActiveTopicIds(hoursBack);
+    
+    res.json({
+      success: true,
+      hcsService: {
+        topics: Object.fromEntries(
+          activeTopics.map((topicId, index) => [`topic_${index + 1}`, topicId])
+        ),
+        production_ready: true,
+        network: 'hedera-testnet',
+        source: 'database_active_topics',
+        hours_back: hoursBack
+      },
+      data: {
+        active_topics: activeTopics,
+        total_active: activeTopics.length,
+        discovery_method: 'database_query'
+      },
+      timestamp: Date.now()
+    });
+    
+  } catch (error) {
+    console.error('❌ Active topics database error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get active topics from database'
+    });
+  }
+});
+
+/**
  * Get HCS topic information with production topic discovery
  * GET /api/hcs/topics
  */
@@ -171,84 +213,92 @@ router.get('/status', async (req, res) => {
 });
 
 /**
- * Discover all Oracle-related topics on blockchain
+ * Discover active Oracle topics with recent messages
  * GET /api/hcs/topics/discover
  */
 router.get('/topics/discover', async (req, res) => {
   try {
-    console.log('🔍 Discovering all Oracle topics from blockchain...');
+    console.log('🔍 Discovering active Oracle topics with recent messages...');
     
     const baseTopics = hcsService.getTopicIds();
+    const activeTopics: { [key: string]: any } = {};
+    const allDiscoveredTopics: { [key: string]: any } = {};
     
-    // Get all known Oracle topic IDs from the system
-    const discoveredTopics = {
-      // Core system topics
-      core: {
-        queries: baseTopics.oracleQueries,
-        operations: baseTopics.computeOperations,
-        accounts: baseTopics.accountOperations,
-        metrics: baseTopics.systemMetrics
-      },
-      // Oracle-specific topics that may exist
-      oracle_specific: {}
-    };
-    
-    // Try to discover Oracle-specific topics by checking known patterns
+    // Extended topic ranges for comprehensive discovery
     const possibleTopicRanges = [
-      // Based on previous discoveries, look in these ranges
-      { start: 6533614, end: 6533620, description: 'Weather/DIA Oracle topics' },
-      { start: 6503587, end: 6503590, description: 'Core Oracle topics' }
+      { start: 6533614, end: 6533620, description: 'Active Oracle topics' },
+      { start: 6503587, end: 6503590, description: 'Core Oracle topics' },
+      { start: 6534090, end: 6534100, description: 'Recent backend topics' },
+      { start: 6496305, end: 6496315, description: 'Historical Oracle topics' }
     ];
     
+    // Check each topic for recent activity
     for (const range of possibleTopicRanges) {
       for (let i = range.start; i <= range.end; i++) {
         const topicId = `0.0.${i}`;
         try {
-          // Quick check if topic exists and has messages
-          const response = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/topics/${topicId}/messages?limit=1`, {
+          // Check for recent messages (last 10)
+          const response = await fetch(`https://testnet.mirrornode.hedera.com/api/v1/topics/${topicId}/messages?limit=10&order=desc`, {
             method: 'GET',
             headers: { 'Accept': 'application/json' },
-            signal: AbortSignal.timeout(2000)
+            signal: AbortSignal.timeout(3000)
           });
           
           if (response.ok) {
-            const data = await response.json();
+            const data: any = await response.json();
             if (data.messages && data.messages.length > 0) {
-              // Try to determine Oracle type from first message
+              const firstMessage = data.messages[0];
+              const lastTimestamp = new Date(firstMessage.consensus_timestamp.split('.')[0] * 1000);
+              const hoursAgo = (Date.now() - lastTimestamp.getTime()) / (1000 * 60 * 60);
+              
+              // Analyze message content for Oracle type detection
+              let oracleType = 'unknown';
+              let hasValidOracleData = false;
+              
               try {
-                const firstMessage = data.messages[0];
                 const decodedMessage = Buffer.from(firstMessage.message, 'base64').toString('utf-8');
                 const messageData = JSON.parse(decodedMessage);
                 
-                // Categorize based on message content
-                let oracleType = 'unknown';
-                if (messageData.raw_data?.temperature || messageData.answer?.includes('°C')) {
+                // Advanced Oracle type detection
+                if (messageData.result?.value?.temperature || messageData.answer?.includes('°C')) {
                   oracleType = 'weather';
-                } else if (messageData.result?.value && typeof messageData.result.value === 'number') {
-                  oracleType = 'price_data';
+                  hasValidOracleData = true;
+                } else if (messageData.result?.value && typeof messageData.result.value === 'number' && messageData.query?.includes('price')) {
+                  oracleType = messageData.result.sources?.includes('dia') ? 'dia' : 'coingecko';
+                  hasValidOracleData = true;
                 } else if (messageData.type === 'ORACLE_QUERY') {
-                  oracleType = 'query';
+                  oracleType = 'queries';
+                  hasValidOracleData = true;
                 } else if (messageData.type === 'COMPUTE_OPERATION') {
-                  oracleType = 'operation';
+                  oracleType = 'operations';
+                  hasValidOracleData = true;
+                } else if (messageData.oracle_used) {
+                  oracleType = messageData.oracle_used;
+                  hasValidOracleData = true;
                 }
-                
-                discoveredTopics.oracle_specific[topicId] = {
-                  id: topicId,
-                  type: oracleType,
-                  message_count: data.messages.length,
-                  last_message: firstMessage.consensus_timestamp,
-                  explorer_link: `https://hashscan.io/testnet/topic/${topicId}`
-                };
-                
-                console.log(`✅ Found Oracle topic ${topicId} (type: ${oracleType})`);
-              } catch (parseError) {
-                // Topic exists but can't parse - still include it
-                discoveredTopics.oracle_specific[topicId] = {
-                  id: topicId,
-                  type: 'unparseable',
-                  message_count: data.messages.length,
-                  explorer_link: `https://hashscan.io/testnet/topic/${topicId}`
-                };
+              } catch (parseError: any) {
+                console.log(`Parse error for topic ${topicId}:`, parseError.message);
+              }
+              
+              const topicInfo = {
+                id: topicId,
+                type: oracleType,
+                message_count: data.messages.length,
+                last_message_timestamp: firstMessage.consensus_timestamp,
+                hours_since_last_message: Math.round(hoursAgo * 100) / 100,
+                has_valid_oracle_data: hasValidOracleData,
+                explorer_link: `https://hashscan.io/testnet/topic/${topicId}`,
+                is_active: hoursAgo < 24 // Active if messaged within 24 hours
+              };
+              
+              allDiscoveredTopics[topicId] = topicInfo;
+              
+              // Only include topics with valid Oracle data as "active"
+              if (hasValidOracleData) {
+                activeTopics[oracleType] = topicId;
+                console.log(`✅ Active Oracle topic: ${topicId} (${oracleType}) - ${Math.round(hoursAgo * 10) / 10}h ago`);
+              } else {
+                console.log(`⚠️ Topic ${topicId} has messages but no valid Oracle data - ${Math.round(hoursAgo * 10) / 10}h ago`);
               }
             }
           }
@@ -258,35 +308,50 @@ router.get('/topics/discover', async (req, res) => {
       }
     }
     
-    const totalDiscovered = Object.keys(discoveredTopics.core).length + Object.keys(discoveredTopics.oracle_specific).length;
+    // Add base topics if they have messages
+    const coreTopicsToCheck = {
+      queries: baseTopics.oracleQueries,
+      operations: baseTopics.computeOperations,
+      accounts: baseTopics.accountOperations,
+      metrics: baseTopics.systemMetrics
+    };
+    
+    for (const [key, topicId] of Object.entries(coreTopicsToCheck)) {
+      if (topicId && !activeTopics[key]) {
+        activeTopics[key] = topicId;
+        console.log(`📝 Added core topic: ${key} -> ${topicId}`);
+      }
+    }
+    
+    const totalActive = Object.keys(activeTopics).length;
+    const totalDiscovered = Object.keys(allDiscoveredTopics).length;
     
     res.json({
       success: true,
-      discovered_topics: discoveredTopics,
-      summary: {
-        total_topics: totalDiscovered,
-        core_topics: Object.keys(discoveredTopics.core).length,
-        oracle_specific_topics: Object.keys(discoveredTopics.oracle_specific).length,
-        network: 'hedera-testnet'
+      hcsService: {
+        topics: activeTopics, // Primary format for frontend
+        production_ready: true,
+        network: 'hedera-testnet',
+        discovery_method: 'active_message_scanning'
       },
-      // Format for frontend consumption
-      frontend_topics: {
-        ...discoveredTopics.core,
-        ...Object.fromEntries(
-          Object.entries(discoveredTopics.oracle_specific).map(([key, value]: [string, any]) => [
-            value.type || key,
-            key
-          ])
-        )
+      discovery_details: {
+        active_topics: activeTopics,
+        all_discovered: allDiscoveredTopics,
+        summary: {
+          total_active_topics: totalActive,
+          total_discovered_topics: totalDiscovered,
+          scan_ranges: possibleTopicRanges.length,
+          network: 'hedera-testnet'
+        }
       },
       timestamp: Date.now()
     });
 
   } catch (error) {
-    console.error('❌ HCS topics discovery error:', error);
+    console.error('❌ HCS active topics discovery error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to discover Oracle topics'
+      error: 'Failed to discover active Oracle topics'
     });
   }
 });

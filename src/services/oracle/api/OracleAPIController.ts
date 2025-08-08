@@ -1,7 +1,10 @@
 import { Request, Response } from 'express';
 import { OracleRouter } from '../OracleRouter';
 import { ChatbotManager } from '../chatbot/ChatbotManager';
-import { OracleQueryOptions, ConsensusMethod } from '../../../types/oracle';
+import { OracleQueryOptions, ConsensusMethod, OracleQueryType } from '../../../types/oracle';
+import { supabaseService } from '../../supabaseService';
+import { HederaOracleLogger } from '../HederaOracleLogger';
+import crypto from 'crypto';
 
 /**
  * Oracle API Controller
@@ -10,10 +13,27 @@ import { OracleQueryOptions, ConsensusMethod } from '../../../types/oracle';
 export class OracleAPIController {
   private oracleRouter: OracleRouter;
   private chatbotManager?: ChatbotManager;
+  private hederaLogger?: HederaOracleLogger;
 
   constructor(oracleRouter: OracleRouter, chatbotManager?: ChatbotManager) {
     this.oracleRouter = oracleRouter;
     this.chatbotManager = chatbotManager;
+    
+    // Initialize Hedera HCS Logger
+    try {
+      const accountId = process.env.HEDERA_ACCOUNT_ID;
+      const privateKey = process.env.HEDERA_PRIVATE_KEY;
+      const topicId = process.env.HEDERA_TOPIC_ID;
+      
+      if (accountId && privateKey) {
+        this.hederaLogger = new HederaOracleLogger(accountId, privateKey, 'testnet', topicId);
+        console.log('✅ Hedera HCS Logger initialized');
+      } else {
+        console.warn('⚠️ Hedera credentials not found, HCS logging disabled');
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize Hedera HCS Logger:', error);
+    }
   }
 
   /**
@@ -93,6 +113,69 @@ export class OracleAPIController {
 
       const result = await this.oracleRouter.query(query, options);
       const executionTime = Date.now() - startTime;
+
+      // Generate unique query ID for tracking
+      const queryId = `query_${Buffer.from(query).toString('base64').substring(0, 10)}_${Date.now()}`;
+      const userSessionId = req.headers['x-session-id'] as string || req.ip || 'anonymous';
+
+      // Log to HCS and get topic ID
+      let hcsTopicId: string | null = null;
+      let blockchainHash: string | null = null;
+      let blockchainLink: string | null = null;
+
+      if (this.hederaLogger) {
+        try {
+          const oracleQuery = {
+            id: queryId,
+            query,
+            timestamp: new Date(),
+            type: OracleQueryType.CUSTOM,
+            requester: userSessionId,
+            options
+          };
+          
+          const transactionId = await this.hederaLogger.logOracleResult(oracleQuery, result);
+          const topicInfo = this.hederaLogger.getTopicInfo();
+          
+          hcsTopicId = topicInfo.topicId;
+          blockchainHash = transactionId;
+          blockchainLink = `https://hashscan.io/testnet/transaction/${transactionId}`;
+          
+          console.log(`🔗 Query logged to HCS topic ${hcsTopicId}: ${transactionId}`);
+        } catch (hcsError) {
+          console.error('❌ HCS logging failed:', hcsError);
+        }
+      }
+
+      // Save to database with HCS topic ID
+      try {
+        await supabaseService.saveQueryHistory({
+          query_id: queryId,
+          user_session_id: userSessionId,
+          query,
+          provider: result.sources?.[0] || 'unknown',
+          answer: typeof result.value === 'object' ? JSON.stringify(result.value) : String(result.value),
+          oracle_used: result.sources?.[0] || 'unknown',
+          oracle_info: {
+            method: result.method,
+            confidence: result.confidence,
+            execution_time_ms: executionTime,
+            sources: result.sources
+          },
+          data_sources: result.sources,
+          confidence: result.confidence,
+          raw_data: result.rawResponses || result.raw_responses,
+          blockchain_hash: blockchainHash || undefined,
+          blockchain_link: blockchainLink || undefined,
+          hcs_topic_id: hcsTopicId || undefined, // 🔥 CRITICAL: Save HCS topic ID
+          execution_time_ms: executionTime,
+          cost_tinybars: Math.floor(Math.random() * 100) // Placeholder cost calculation
+        });
+        
+        console.log(`💾 Query saved to database with topic ID: ${hcsTopicId}`);
+      } catch (dbError) {
+        console.error('❌ Database save failed:', dbError);
+      }
 
       // Handle conversational AI responses specially
       if (result.metadata?.isConversational) {
