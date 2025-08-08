@@ -16,6 +16,8 @@ import hfsRoutes from './routes/hfsRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import hcsRoutes from './routes/hcsRoutes';
 import enhancedOracleRoutes from './api/routes/oracle';
+import { createOracleRoutes } from './services/oracle/api/oracleRoutes';
+import { OracleRouter } from './services/oracle/OracleRouter';
 
 // Load environment variables
 dotenv.config();
@@ -76,6 +78,32 @@ app.use(`${apiPrefix}/hashscan`, require('./routes/hashscanRoutes').default); //
 
 // Enhanced Oracle Manager API Routes (NEW SYSTEM)
 app.use(`${apiPrefix}/oracle-manager`, oracleManagerRoutes); // Oracle Manager routes with HCS logging
+
+// NEW Oracle API Controller Routes (WITH DATABASE RECORDING)
+// Initialize Oracle Router for the Oracle API Controller
+let oracleRouter: OracleRouter | null = null;
+const initOracleRouter = async () => {
+  if (!oracleRouter) {
+    oracleRouter = new OracleRouter();
+    await oracleRouter.initialize();
+  }
+  return oracleRouter;
+};
+
+// Create Oracle API Controller routes with database recording
+app.use(`${apiPrefix}/oracle`, async (req, res, next) => {
+  try {
+    const router = await initOracleRouter();
+    const oracleAPIRoutes = createOracleRoutes(router);
+    oracleAPIRoutes(req, res, next);
+  } catch (error) {
+    console.error('❌ Oracle API Router initialization failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Oracle API initialization failed'
+    });
+  }
+});
 
 // Root route - serve the landing page
 app.get('/', (req: Request, res: Response) => {
