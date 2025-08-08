@@ -81,28 +81,23 @@ app.use(`${apiPrefix}/oracle-manager`, oracleManagerRoutes); // Oracle Manager r
 
 // NEW Oracle API Controller Routes (WITH DATABASE RECORDING)
 // Initialize Oracle Router for the Oracle API Controller
-let oracleRouter: OracleRouter | null = null;
-const initOracleRouter = async () => {
-  if (!oracleRouter) {
-    oracleRouter = new OracleRouter();
-    await oracleRouter.initialize();
-  }
-  return oracleRouter;
-};
-
-// Create Oracle API Controller routes with database recording
-app.use(`${apiPrefix}/oracle`, async (req, res, next) => {
+const initializeOracleAPIRoutes = async () => {
   try {
-    const router = await initOracleRouter();
-    const oracleAPIRoutes = createOracleRoutes(router);
-    oracleAPIRoutes(req, res, next);
+    const oracleRouter = new OracleRouter();
+    await oracleRouter.initialize();
+    return createOracleRoutes(oracleRouter);
   } catch (error) {
     console.error('❌ Oracle API Router initialization failed:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Oracle API initialization failed'
-    });
+    throw error;
   }
+};
+
+// Setup Oracle API Controller routes with database recording
+initializeOracleAPIRoutes().then(oracleAPIRoutes => {
+  app.use(`${apiPrefix}/oracle`, oracleAPIRoutes);
+  console.log('✅ Oracle API Controller routes initialized with database recording');
+}).catch(error => {
+  console.error('❌ Failed to initialize Oracle API Controller routes:', error);
 });
 
 // Root route - serve the landing page
