@@ -265,7 +265,7 @@ router.get('/providers', async (req: Request, res: Response) => {
         { name: 'Sports API', status: 'online', reliability: '89%', latency: '412ms', queries: 178, uptime: '92%', type: 'sports' },
         { name: 'Wikipedia API', status: 'online', reliability: '96%', latency: '123ms', queries: 567, uptime: '98%', type: 'wikipedia' },
         { name: 'Exchange Rate API', status: 'online', reliability: '93%', latency: '187ms', queries: 334, uptime: '96%', type: 'exchange' },
-        { name: 'Web Scraping Oracle', status: 'online', reliability: '82%', latency: '534ms', queries: 123, uptime: '88%', type: 'web-scraping' }
+        { name: 'Chatbot', status: 'online', reliability: '87%', latency: '1200ms', queries: 156, uptime: '91%', type: 'chatbot' }
       ];
       
       additionalProviders.forEach((provider, index) => {

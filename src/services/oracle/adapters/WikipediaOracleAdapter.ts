@@ -99,16 +99,9 @@ export class WikipediaOracleAdapter extends OracleProviderBase {
       results_count: results.length,
       top_result: {
         title: topResult.title,
-        snippet: topResult.snippet,
-        word_count: topResult.wordcount,
-        page_id: topResult.pageid,
-        summary: summary
+        snippet: this.truncateText(topResult.snippet, 150),
+        extract: summary.extract ? this.truncateText(summary.extract, 200) : topResult.snippet
       },
-      all_results: results.map((r: any) => ({
-        title: r.title,
-        snippet: r.snippet,
-        page_id: r.pageid
-      })),
       source: 'wikipedia_search',
       last_updated: new Date().toISOString()
     };
@@ -153,14 +146,8 @@ export class WikipediaOracleAdapter extends OracleProviderBase {
     return {
       type: 'wikipedia_page',
       title: data.title,
-      extract: data.extract,
+      extract: data.extract ? this.truncateText(data.extract, 250) : 'No summary available',
       description: data.description,
-      page_id: data.pageid,
-      lang: data.lang,
-      content_urls: data.content_urls,
-      thumbnail: data.thumbnail,
-      coordinates: data.coordinates,
-      last_modified: data.timestamp,
       source: 'wikipedia_page',
       last_updated: new Date().toISOString()
     };
@@ -203,6 +190,23 @@ export class WikipediaOracleAdapter extends OracleProviderBase {
       source: 'wikipedia_random',
       last_updated: new Date().toISOString()
     };
+  }
+
+  /**
+   * Truncate text to specific length for HCS message size optimization
+   */
+  private truncateText(text: string, maxLength: number): string {
+    if (!text || text.length <= maxLength) return text;
+    
+    // Find last complete word within limit
+    let truncated = text.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    
+    if (lastSpace > maxLength * 0.8) { // If we can save at least 20% by cutting at word boundary
+      truncated = text.substring(0, lastSpace);
+    }
+    
+    return truncated + '...';
   }
 
   /**

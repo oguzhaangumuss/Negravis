@@ -112,13 +112,9 @@ export class NASAOracleAdapter extends OracleProviderBase {
     return {
       type: 'astronomy_picture',
       title: data.title,
-      explanation: data.explanation,
-      url: data.url,
-      hd_url: data.hdurl,
-      media_type: data.media_type,
+      explanation: this.truncateText(data.explanation, 200),
       date: data.date,
-      copyright: data.copyright,
-      service_version: data.service_version,
+      media_type: data.media_type,
       source: 'nasa_apod',
       last_updated: new Date().toISOString()
     };
@@ -154,8 +150,7 @@ export class NASAOracleAdapter extends OracleProviderBase {
       date: today,
       object_count: todayObjects.length,
       potentially_hazardous_count: todayObjects.filter((obj: any) => obj.is_potentially_hazardous_asteroid).length,
-      closest_approach: todayObjects.length > 0 ? todayObjects[0] : null,
-      total_objects: data.element_count,
+      summary: `${todayObjects.length} near-Earth objects detected today`,
       source: 'nasa_neo',
       last_updated: new Date().toISOString()
     };
@@ -236,6 +231,23 @@ export class NASAOracleAdapter extends OracleProviderBase {
       source: 'nasa_space_weather',
       last_updated: new Date().toISOString()
     };
+  }
+
+  /**
+   * Truncate text to specific length for HCS message size optimization
+   */
+  private truncateText(text: string, maxLength: number): string {
+    if (!text || text.length <= maxLength) return text;
+    
+    // Find last complete word within limit
+    let truncated = text.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    
+    if (lastSpace > maxLength * 0.8) { // If we can save at least 20% by cutting at word boundary
+      truncated = text.substring(0, lastSpace);
+    }
+    
+    return truncated + '...';
   }
 
   /**
