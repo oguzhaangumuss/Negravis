@@ -11,6 +11,7 @@ import accountRoutes from './routes/accountRoutes';
 import serviceRoutes from './routes/serviceRoutes';
 import contractRoutes from './routes/contractRoutes';
 import oracleRoutes from './routes/oracleRoutes';
+import oracleManagerRoutes from './routes/oracleManagerRoutes';
 import hfsRoutes from './routes/hfsRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import hcsRoutes from './routes/hcsRoutes';
@@ -74,7 +75,7 @@ app.use(`${apiPrefix}/hcs`, hcsRoutes); // Hedera Consensus Service routes
 app.use(`${apiPrefix}/hashscan`, require('./routes/hashscanRoutes').default); // Oracle Hashscan routes
 
 // Enhanced Oracle Manager API Routes (NEW SYSTEM)
-app.use(`${apiPrefix}/oracle-manager`, enhancedOracleRoutes); // Enhanced Oracle Manager routes
+app.use(`${apiPrefix}/oracle-manager`, oracleManagerRoutes); // Oracle Manager routes with HCS logging
 
 // Root route - serve the landing page
 app.get('/', (req: Request, res: Response) => {

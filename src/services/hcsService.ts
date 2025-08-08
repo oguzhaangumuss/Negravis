@@ -246,7 +246,7 @@ export class HCSService {
     cost: number;
     executionTime: number;
     success: boolean;
-  }): Promise<void> {
+  }): Promise<string> {
     await this.ensureTopicsExist();
 
     if (!this.topicIds.oracleQueries) {
@@ -261,8 +261,9 @@ export class HCSService {
 
     try {
       const jsonMessage = JSON.stringify(logEntry);
-      await this.submitMessage(this.topicIds.oracleQueries, jsonMessage);
-      console.log(`📝 Oracle query logged to HCS: ${data.queryId}`);
+      const transactionId = await this.submitMessage(this.topicIds.oracleQueries, jsonMessage);
+      console.log(`📝 Oracle query logged to HCS: ${data.queryId} - TX: ${transactionId}`);
+      return transactionId;
     } catch (jsonError: any) {
       console.log(`⚠️ Oracle query JSON serialization failed: ${jsonError.message}`);
       // Try with simplified data
@@ -274,8 +275,9 @@ export class HCSService {
         model: data.model,
         cost: data.cost
       };
-      await this.submitMessage(this.topicIds.oracleQueries, JSON.stringify(simpleLogEntry));
-      console.log(`📝 Oracle query logged to HCS (simplified): ${data.queryId}`);
+      const transactionId = await this.submitMessage(this.topicIds.oracleQueries, JSON.stringify(simpleLogEntry));
+      console.log(`📝 Oracle query logged to HCS (simplified): ${data.queryId} - TX: ${transactionId}`);
+      return transactionId;
     }
   }
 
