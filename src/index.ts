@@ -10,7 +10,7 @@ import { initializeApplication } from './startup';
 import accountRoutes from './routes/accountRoutes';
 import serviceRoutes from './routes/serviceRoutes';
 import contractRoutes from './routes/contractRoutes';
-import oracleRoutes from './routes/oracleRoutes';
+// import oracleRoutes from './routes/oracleRoutes'; // Legacy routes - REMOVED
 import oracleManagerRoutes from './routes/oracleManagerRoutes';
 import hfsRoutes from './routes/hfsRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
@@ -70,7 +70,7 @@ const apiPrefix = '/api';
 app.use(`${apiPrefix}/account`, accountRoutes);
 app.use(`${apiPrefix}/services`, serviceRoutes);
 app.use(`${apiPrefix}/contracts`, contractRoutes);
-app.use(`${apiPrefix}/oracles`, oracleRoutes); // Legacy oracle routes
+// app.use(`${apiPrefix}/oracles`, oracleRoutes); // Legacy oracle routes - REMOVED
 app.use(`${apiPrefix}/hfs`, hfsRoutes);
 app.use(`${apiPrefix}/analytics`, analyticsRoutes);
 app.use(`${apiPrefix}/hcs`, hcsRoutes); // Hedera Consensus Service routes
