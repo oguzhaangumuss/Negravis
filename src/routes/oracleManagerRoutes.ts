@@ -3,14 +3,23 @@ import { oracleManager } from '../services/oracleManager';
 import { hcsService } from '../services/hcsService';
 import { supabaseService } from '../services/supabaseService';
 
-// 🔧 DEBUG: Check if modules are loaded properly
-console.log('🔧 DEBUG - Oracle Manager Route Loading:');
-console.log('- oracleManager loaded:', typeof oracleManager);
-console.log('- hcsService loaded:', typeof hcsService);
-console.log('- supabaseService loaded:', typeof supabaseService);
-console.log('- NODE_ENV:', process.env.NODE_ENV);
-console.log('- SUPABASE_URL exists:', !!process.env.SUPABASE_URL);
-console.log('- SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+// 🚨 CRITICAL DEBUG - BASIC TEST
+console.log('🚨🚨🚨 ORACLE MANAGER ROUTES LOADING - BASIC TEST');
+console.log('🚨 If you see this message, the route file is loading');
+console.log('🚨 NODE_ENV:', process.env.NODE_ENV);
+
+// 🔧 DEBUG: Check if modules are loaded properly  
+try {
+  console.log('🔧 DEBUG - Oracle Manager Route Loading:');
+  console.log('- oracleManager loaded:', typeof oracleManager);
+  console.log('- hcsService loaded:', typeof hcsService);
+  console.log('- supabaseService loaded:', typeof supabaseService);
+  console.log('- NODE_ENV:', process.env.NODE_ENV);
+  console.log('- SUPABASE_URL exists:', !!process.env.SUPABASE_URL);
+  console.log('- SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+} catch (debugError) {
+  console.error('🚨 DEBUG ERROR IN ORACLE MANAGER ROUTES:', debugError);
+}
 
 const router = express.Router();
 
