@@ -204,7 +204,7 @@ router.post('/query', async (req: Request, res: Response) => {
         cost_tinybars: Math.floor(Math.random() * 100) // Placeholder cost calculation
       });
       
-      console.log(`💾 Oracle Manager query saved to database with topic ID: ${hcsTopicId}`);
+      console.log(`✅ Oracle Manager query saved to database with topic ID: ${hcsTopicId}`);
     } catch (dbError) {
       console.error('❌ Oracle Manager database save failed:', dbError);
     }
